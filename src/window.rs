@@ -1,4 +1,4 @@
-use minifb::{Key, KeyRepeat, Window, WindowOptions};
+use minifb::{Key, KeyRepeat, MouseMode, Window, WindowOptions};
 
 pub struct Canvas {
     width: usize,
@@ -9,12 +9,14 @@ pub struct Canvas {
 
 impl Canvas {
     pub fn new(width: usize, height: usize, title: &str) -> Self {
-        let window = Window::new(title, width, height,
-            WindowOptions {
+        let mut window = Window::new(title, width, height,
+                                     WindowOptions {
                 resize: false,
                 ..WindowOptions::default()
             },
         ).expect("Failed to create window");
+
+        window.set_cursor_visibility(false);
 
         let buffer = vec![0; width * height];
 
@@ -47,12 +49,16 @@ impl Canvas {
     pub fn height(&self) -> usize {
         self.height
     }
-    
-    pub fn is_key_pressed(&self, key: Key) -> bool {
-        self.window.is_key_pressed(key, KeyRepeat::Yes)
+
+    pub fn is_key_down(&self, key: Key) -> bool {
+        self.window.is_key_down(key)
     }
-    
+
     pub fn clear(&mut self) {
         self.buffer.fill(0);
+    }
+
+    pub fn get_mouse_pos(&self) -> Option<(f32, f32)> {
+        self.window.get_mouse_pos(MouseMode::Discard)
     }
 }
