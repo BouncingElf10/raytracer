@@ -17,6 +17,7 @@ mod movement;
 fn main() {
     let mut canvas = Canvas::new(80 * 10, 60 * 10, "WINDOW");
     let mut camera = Camera::new(canvas.width(), canvas.height(), Ray::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0)));
+    let mut movement_state = movement::MovementState::new();
     let scene = scene::create_scene();
     let mut delta_time = 0.0;
     loop {
@@ -37,7 +38,7 @@ fn main() {
         canvas.set_window_title(&format!("frame in: {}ms   fps: {:.2}", frame_start.elapsed().as_millis(), 1.0 / frame_start.elapsed().as_secs_f32()));
         canvas.update();
 
-        movement::apply_movements(&mut camera, &canvas, delta_time);
+        movement::apply_movements(&mut camera, &canvas, delta_time, &mut movement_state);
 
         delta_time = frame_start.elapsed().as_secs_f32();
         if !canvas.is_open() { break; }
