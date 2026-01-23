@@ -1,14 +1,14 @@
-use minifb::Key;
 use glam::Vec3;
+use glfw::Key;
 use crate::camera::Camera;
 use crate::window::Canvas;
 
 pub struct MovementState {
-    last_mouse_x: f32,
-    last_mouse_y: f32,
+    last_mouse_x: f64,
+    last_mouse_y: f64,
     first_mouse: bool,
-    yaw: f32,
-    pitch: f32,
+    yaw: f64,
+    pitch: f64,
 }
 
 impl MovementState {
@@ -25,7 +25,7 @@ impl MovementState {
 
 pub fn apply_movements(camera: &mut Camera, canvas: &Canvas, delta_time: f32, state: &mut MovementState) {
     let mut ray = camera.ray();
-    if let Some((mouse_x, mouse_y)) = canvas.get_mouse_pos() {
+    if let (mouse_x, mouse_y) = canvas.get_mouse_pos() {
         if state.first_mouse {
             state.last_mouse_x = mouse_x;
             state.last_mouse_y = mouse_y;
@@ -53,9 +53,9 @@ pub fn apply_movements(camera: &mut Camera, canvas: &Canvas, delta_time: f32, st
         }
 
         let direction = Vec3::new(
-            state.yaw.to_radians().cos() * state.pitch.to_radians().cos(),
-            state.pitch.to_radians().sin(),
-            state.yaw.to_radians().sin() * state.pitch.to_radians().cos(),
+            (state.yaw.to_radians().cos() * state.pitch.to_radians().cos()) as f32,
+            state.pitch.to_radians().sin() as f32,
+            (state.yaw.to_radians().sin() * state.pitch.to_radians().cos()) as f32,
         ).normalize();
 
         ray = crate::ray::Ray::new(ray.origin(), direction);
