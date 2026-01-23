@@ -1,6 +1,7 @@
 use glfw::{fail_on_errors, Action, Context, CursorMode, Glfw, GlfwReceiver, Key, PWindow, WindowEvent};
 use glfw::ffi::{glfwSetCursor, glfwSetInputMode};
 use wgpu::TextureUsages;
+use crate::color::Color;
 
 pub struct Canvas {
     width: u32,
@@ -17,6 +18,8 @@ pub struct Canvas {
     bind_group: wgpu::BindGroup,
     bind_group_layout: wgpu::BindGroupLayout,
     render_pipeline: wgpu::RenderPipeline,
+    pub(crate) accum_buffer: Vec<Color>,
+    pub(crate) sample_count: u32,
 }
 
 impl Canvas {
@@ -30,6 +33,9 @@ impl Canvas {
         window.set_all_polling(true);
         window.make_current();
         window.set_cursor_mode(CursorMode::Disabled);
+
+        let accum_buffer = vec![Color::black(); (width * height) as usize];
+        let sample_count = 0;
 
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
@@ -187,7 +193,7 @@ impl Canvas {
                 cache: None,
             });
 
-        Self { width, height, window, events, glfw, surface, device, queue, config, pixel_buffer, pixel_texture, bind_group, bind_group_layout, render_pipeline  }
+        Self { width, height, window, events, glfw, surface, device, queue, config, pixel_buffer, pixel_texture, bind_group, bind_group_layout, render_pipeline, accum_buffer, sample_count }
     }
 
     fn resize(&mut self, width: u32, height: u32) {
@@ -213,6 +219,9 @@ impl Canvas {
                 usage: TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST,
                 view_formats: &[],
             });
+
+            self.accum_buffer = vec![Color::black(); (width * height) as usize];
+            self.sample_count = 0;
         }
     }
 
@@ -328,6 +337,11 @@ impl Canvas {
 
     pub fn render_clear(&mut self, color: wgpu::Color) -> Result<(), wgpu::SurfaceError> {
         self.render(color)
+    }
+
+    pub fn reset_accumulation(&mut self) {
+        self.accum_buffer.fill(Color::black());
+        self.sample_count = 0;
     }
 
     pub fn is_open(&self) -> bool {

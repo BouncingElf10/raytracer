@@ -23,7 +23,8 @@ impl MovementState {
     }
 }
 
-pub fn apply_movements(camera: &mut Camera, canvas: &Canvas, delta_time: f32, state: &mut MovementState) {
+pub fn apply_movements(camera: &mut Camera, canvas: &Canvas, delta_time: f32, state: &mut MovementState) -> bool {
+    let mut moved = false;
     let mut ray = camera.ray();
     if let (mouse_x, mouse_y) = canvas.get_mouse_pos() {
         if state.first_mouse {
@@ -58,6 +59,10 @@ pub fn apply_movements(camera: &mut Camera, canvas: &Canvas, delta_time: f32, st
             (state.yaw.to_radians().sin() * state.pitch.to_radians().cos()) as f32,
         ).normalize();
 
+        if x_offset != 0.0 || y_offset != 0.0 {
+            moved = true;
+        }
+
         ray = crate::ray::Ray::new(ray.origin(), direction);
     }
 
@@ -88,7 +93,14 @@ pub fn apply_movements(camera: &mut Camera, canvas: &Canvas, delta_time: f32, st
         movement -= up * move_speed * delta_time;
     }
 
+    if movement.length_squared() > 0.0 {
+        moved = true;
+    }
+
     ray = crate::ray::Ray::new(ray.origin() + movement, ray.direction());
 
-    camera.set_ray(ray);
+    if moved {
+        camera.set_ray(ray);
+    }
+    moved
 }
