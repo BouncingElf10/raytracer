@@ -37,7 +37,7 @@ impl Ray {
     pub fn at(&self, t: f32) -> Vec3 { self.origin + self.direction * t }
 }
 
-pub fn get_ray_from_screen(camera: &Camera, x: usize, y: usize) -> Ray {
+pub fn get_ray_from_screen(camera: &Camera, x: u32, y: u32) -> Ray {
     let fov_y: f32 = 90.0f32.to_radians();
     let aspect = camera.width() as f32 / camera.height() as f32;
 
