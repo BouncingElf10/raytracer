@@ -23,19 +23,22 @@ async fn main() {
     let mut delta_time = 0.0;
     loop {
         let frame_start = Instant::now();
-        //
-        // camera.for_each_pixel(|x, y| {
-        //     let ray = ray::get_ray_from_screen(&camera, x, y);
-        //     scene.get_objects().iter().for_each(|hittable| {
-        //         let info: HitInfo = hittable.hit(&ray);
-        //         if info.has_hit {
-        //             let normal = info.normal_ray.direction();
-        //             canvas.paint_pixel(x, y, Color::newFromNormals(normal.x, normal.y, normal.z).to_u32());
-        //         }
-        //     });
-        // });
-        canvas.render_default().unwrap();
+
+        camera.for_each_pixel(|x, y| {
+            let ray = ray::get_ray_from_screen(&camera, x, y);
+            scene.get_objects().iter().for_each(|hittable| {
+                let info: HitInfo = hittable.hit(&ray);
+                if info.has_hit {
+                    let normal = info.normal_ray.direction();
+                    canvas.paint_pixel(x, y, Color::newFromNormals(normal.x, normal.y, normal.z).to_u32());
+                } else {
+                    canvas.paint_pixel(x, y, Color::new((x / canvas.width()) as f32, (y / canvas.height()) as f32, 0.0).to_u32());
+                }
+            });
+        });
+
         canvas.set_window_title(&format!("frame in: {}ms   fps: {:.2}", frame_start.elapsed().as_millis(), 1.0 / frame_start.elapsed().as_secs_f32()));
+        canvas.present().unwrap();
         canvas.update();
 
         movement::apply_movements(&mut camera, &canvas, delta_time, &mut movement_state);
