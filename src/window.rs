@@ -1,4 +1,5 @@
-use glfw::{fail_on_errors, Action, Context, Glfw, GlfwReceiver, Key, PWindow, WindowEvent};
+use glfw::{fail_on_errors, Action, Context, CursorMode, Glfw, GlfwReceiver, Key, PWindow, WindowEvent};
+use glfw::ffi::{glfwSetCursor, glfwSetInputMode};
 use wgpu::TextureUsages;
 
 pub struct Canvas {
@@ -28,6 +29,7 @@ impl Canvas {
 
         window.set_all_polling(true);
         window.make_current();
+        window.set_cursor_mode(CursorMode::Disabled);
 
         let instance = wgpu::Instance::new(&wgpu::InstanceDescriptor {
             backends: wgpu::Backends::all(),
