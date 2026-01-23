@@ -1,5 +1,6 @@
 use crate::camera::Camera;
 use glam::Vec3;
+use rand::random;
 
 #[derive(Clone)]
 pub struct Ray {
@@ -32,6 +33,16 @@ impl Ray {
         self.direction[2] = -x * sin_a + z * cos_a;
     }
 
+    pub fn rotate_z(&mut self, angle: f32) {
+        let cos_a = angle.cos();
+        let sin_a = angle.sin();
+        let x = self.direction[0];
+        let y = self.direction[1];
+        self.direction[0] = x * cos_a - y * sin_a;
+        self.direction[1] = x * sin_a + y * cos_a;
+    }
+
+    pub fn dot(&self) -> f32 { self.direction.dot(self.direction) }
     pub fn move_origin(&mut self, distance: f32) { self.origin += self.direction * distance; }
     pub fn move_origin_along_direction(&mut self, distance: f32) { self.origin += self.direction * distance; }
     pub fn at(&self, t: f32) -> Vec3 { self.origin + self.direction * t }
@@ -55,3 +66,29 @@ pub fn get_ray_from_screen(camera: &Camera, x: u32, y: u32) -> Ray {
 
     Ray::new(camera.ray().origin(), direction)
 }
+
+pub fn random_cosine_hemisphere(normal: Vec3) -> Vec3 {
+    let r1 = random::<f32>();
+    let r2 = random::<f32>();
+
+    let phi = 2.0 * std::f32::consts::PI * r1;
+    let x = phi.cos() * r2.sqrt();
+    let y = phi.sin() * r2.sqrt();
+    let z = (1.0 - r2).sqrt();
+
+    let local = Vec3::new(x, y, z);
+
+    let up = if normal.z.abs() < 0.999 {
+        Vec3::Z
+    } else {
+        Vec3::X
+    };
+
+    let tangent = normal.cross(up).normalize();
+    let bitangent = normal.cross(tangent);
+
+    (tangent * local.x +
+        bitangent * local.y +
+        normal * local.z).normalize()
+}
+

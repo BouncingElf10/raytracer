@@ -1,8 +1,10 @@
 use glam::Vec3;
+use crate::material::Material;
 use crate::ray::Ray;
 
 pub trait Hittable {
     fn hit(&self, ray: &Ray) -> HitInfo;
+    fn set_material(&mut self, material: Material);
 }
 
 pub struct HitInfo {
@@ -10,17 +12,19 @@ pub struct HitInfo {
     pub t: f64,
     pub pos: Vec3,
     pub sent_ray: Ray,
-    pub normal_ray: Ray
+    pub normal: Vec3,
+    pub material: Material,
 }
 
 pub struct Sphere {
     pos: Vec3,
     radius: f32,
+    material: Material,
 }
 
 impl Sphere {
-    pub fn new(pos: Vec3, radius: f32) -> Self {
-        Self { pos, radius }
+    pub fn new(pos: Vec3, radius: f32, material: Material) -> Self {
+        Self { pos, radius, material }
     }
 }
 
@@ -42,7 +46,8 @@ impl Hittable for Sphere {
                 t: t as f64,
                 pos: hit_pos,
                 sent_ray: ray.clone(),
-                normal_ray: Ray::new(hit_pos, normal),
+                normal,
+                material: self.material
             }
         } else {
             HitInfo {
@@ -50,8 +55,13 @@ impl Hittable for Sphere {
                 t: f64::INFINITY,
                 pos: Vec3::ZERO,
                 sent_ray: ray.clone(),
-                normal_ray: Ray::new(Vec3::ZERO, Vec3::ZERO),
+                normal: Vec3::ZERO,
+                material: self.material
             }
         }
+    }
+
+    fn set_material(&mut self, material: Material) {
+        self.material = material;
     }
 }
