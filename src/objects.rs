@@ -7,6 +7,7 @@ pub trait Hittable {
 
 pub struct HitInfo {
     pub has_hit: bool,
+    pub t: f64,
     pub pos: Vec3,
     pub sent_ray: Ray,
     pub normal_ray: Ray
@@ -38,6 +39,7 @@ impl Hittable for Sphere {
 
             HitInfo {
                 has_hit: true,
+                t: t as f64,
                 pos: hit_pos,
                 sent_ray: ray.clone(),
                 normal_ray: Ray::new(hit_pos, normal),
@@ -45,6 +47,7 @@ impl Hittable for Sphere {
         } else {
             HitInfo {
                 has_hit: false,
+                t: f64::INFINITY,
                 pos: Vec3::ZERO,
                 sent_ray: ray.clone(),
                 normal_ray: Ray::new(Vec3::ZERO, Vec3::ZERO),

@@ -26,15 +26,24 @@ async fn main() {
 
         camera.for_each_pixel(|x, y| {
             let ray = ray::get_ray_from_screen(&camera, x, y);
-            scene.get_objects().iter().for_each(|hittable| {
-                let info: HitInfo = hittable.hit(&ray);
-                if info.has_hit {
-                    let normal = info.normal_ray.direction();
-                    canvas.paint_pixel(x, y, Color::newFromNormals(normal.x, normal.y, normal.z).to_u32());
-                } else {
-                    canvas.paint_pixel(x, y, Color::new((x / canvas.width()) as f32, (y / canvas.height()) as f32, 0.0).to_u32());
+
+            let mut closest_hit: Option<HitInfo> = None;
+            let mut closest_t = f64::INFINITY;
+
+            for hittable in scene.get_objects() {
+                let info = hittable.hit(&ray);
+                if info.has_hit && info.t < closest_t {
+                    closest_t = info.t;
+                    closest_hit = Some(info);
                 }
-            });
+            }
+
+            if let Some(info) = closest_hit {
+                let normal = info.normal_ray.direction();
+                canvas.paint_pixel(x, y, Color::newFromNormals(normal.x, normal.y, normal.z).to_u32());
+            } else {
+                canvas.paint_pixel(x, y, 0);
+            }
         });
 
         canvas.set_window_title(&format!("frame in: {}ms   fps: {:.2}", frame_start.elapsed().as_millis(), 1.0 / frame_start.elapsed().as_secs_f32()));
