@@ -37,27 +37,35 @@ impl Hittable for Sphere {
         let discriminant = b * b - 4.0 * a * c;
 
         if discriminant > 0.0 {
-            let t = (-b - discriminant.sqrt()) / (2.0 * a);
-            let hit_pos = ray.at(t);
-            let normal = (hit_pos - self.pos).normalize();
+            let sqrt_d = discriminant.sqrt();
+            let mut t = (-b - sqrt_d) / (2.0 * a);
 
-            HitInfo {
-                has_hit: true,
-                t: t as f64,
-                pos: hit_pos,
-                sent_ray: ray.clone(),
-                normal,
-                material: self.material
+            if t < 0.001 {
+                t = (-b + sqrt_d) / (2.0 * a);
             }
-        } else {
-            HitInfo {
-                has_hit: false,
-                t: f64::INFINITY,
-                pos: Vec3::ZERO,
-                sent_ray: ray.clone(),
-                normal: Vec3::ZERO,
-                material: self.material
+
+            if t > 0.001 {
+                let hit_pos = ray.at(t);
+                let normal = (hit_pos - self.pos).normalize();
+
+                return HitInfo {
+                    has_hit: true,
+                    t: t as f64,
+                    pos: hit_pos,
+                    sent_ray: ray.clone(),
+                    normal,
+                    material: self.material
+                };
             }
+        }
+
+        HitInfo {
+            has_hit: false,
+            t: f64::INFINITY,
+            pos: Vec3::ZERO,
+            sent_ray: ray.clone(),
+            normal: Vec3::ZERO,
+            material: self.material
         }
     }
 

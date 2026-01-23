@@ -44,8 +44,6 @@ impl Renderer {
 }
 
 fn recursive_bounce(ray: Ray, color: Color, scene: &Scene, bounce_num: u8) -> Color {
-    if bounce_num >= MAX_RECURSION { return Color::black(); }
-
     let mut closest_hit: Option<HitInfo> = None;
     let mut closest_t = f64::INFINITY;
 
@@ -59,16 +57,20 @@ fn recursive_bounce(ray: Ray, color: Color, scene: &Scene, bounce_num: u8) -> Co
 
     if let Some(info) = closest_hit {
         if info.material.emission > 0.0 {
-            return color * info.material.albedo;
+            return color * info.material.albedo * info.material.emission;
         }
 
-        let bounce_dir = ray::random_cosine_hemisphere(info.normal.normalize());
-        let bounce_ray = Ray::new(info.pos + info.normal * 0.001, bounce_dir);
+        if bounce_num >= MAX_RECURSION {
+            return Color::black();
+        }
+
+        let normal = info.normal.normalize();
+        let bounce_dir = ray::random_cosine_hemisphere(normal);
+        let bounce_ray = Ray::new(info.pos + normal * 0.001, bounce_dir);
         let new_color = color * info.material.albedo;
 
         recursive_bounce(bounce_ray, new_color, scene, bounce_num + 1)
     } else {
         Color::black()
     }
-
 }

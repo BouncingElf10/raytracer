@@ -27,7 +27,7 @@ pub fn create_scene() -> Scene {
     let mut scene = Scene::new();
     let sphere1 = Sphere::new(Vec3::new(0.0, 0.0, 2.0), 0.5, Material::new(Color::new(1.0, 1.0, 1.0), 0.5, 0.5, 1.0));
     let sphere2 = Sphere::new(Vec3::new(0.0, 2.0, 2.0), 1.0, Material::new(Color::new(1.0, 0.5, 0.5), 0.5, 0.5, 0.0));
-    let sphere3 = Sphere::new(Vec3::new(0.0, -2.0, 2.0), 0.75, Material::new(Color::new(0.5, 0.5, 1.0), 0.5, 0.5, 0.0));
+    let sphere3 = Sphere::new(Vec3::new(0.0, -6.0, 2.0), 5.0, Material::new(Color::new(0.5, 0.5, 1.0), 0.5, 0.5, 0.0));
 
     scene
         .add_object(Box::new(sphere1))
