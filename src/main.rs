@@ -17,7 +17,7 @@ mod material;
 #[tokio::main]
 async fn main() {
     let mut canvas = Canvas::new(80 * 10, 60 * 10, "WINDOW").await;
-    let mut camera = Camera::new(canvas.width(), canvas.height(), Ray::new(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 1.0)));
+    let mut camera = Camera::new(canvas.width(), canvas.height(), Ray::new(Vec3::new(0.0, 0.0, 5.0), Vec3::new(0.0, 0.0, -1.0)));
     let mut movement_state = movement::MovementState::new();
     let scene = scene::create_scene();
     let renderer = renderer::Renderer::new();
@@ -27,7 +27,7 @@ async fn main() {
         let frame_start = Instant::now();
 
         renderer.render(&camera, &scene, &mut canvas);
-
+        println!("{:?}", camera.ray());
         canvas.set_window_title(&format!("frame in: {}ms   fps: {:.2}   sample count: {}",
                                          frame_start.elapsed().as_millis(),
                                          1.0 / frame_start.elapsed().as_secs_f32(),
