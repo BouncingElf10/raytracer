@@ -2,7 +2,7 @@ use crate::camera::Camera;
 use glam::Vec3;
 use rand::random;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Ray {
     origin: Vec3,
     direction: Vec3
@@ -14,6 +14,9 @@ impl Ray {
     }
     pub fn origin(&self) -> Vec3 { self.origin }
     pub fn direction(&self) -> Vec3 { self.direction }
+    pub fn reflect(&self, normal: Vec3) -> Self {
+        Self::new(self.origin(), self.direction() - 2.0 * normal.dot(self.direction()) * normal)
+    }
 
     pub fn rotate_x(&mut self, angle: f32) {
         let cos_a = angle.cos();

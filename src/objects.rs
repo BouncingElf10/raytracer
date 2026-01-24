@@ -28,6 +28,135 @@ impl Sphere {
     }
 }
 
+pub struct Plane {
+    center: Vec3,
+    normal: Vec3,
+    width: f32,
+    length: f32,
+    material: Material,
+}
+
+impl Plane {
+    pub fn new(center: Vec3, normal: Vec3, width: f32, length: f32, material: Material) -> Self {
+        Self { center, normal, width, length, material }
+    }
+}
+
+pub struct Triangle {
+    v0: Vec3,
+    v1: Vec3,
+    v2: Vec3,
+    material: Material,
+}
+
+impl Triangle {
+    pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, material: Material) -> Self {
+        Self { v0, v1, v2, material }
+    }
+}
+
+impl Hittable for Triangle {
+    fn hit(&self, ray: &Ray) -> HitInfo {
+        let eps = 1e-6;
+
+        let edge1 = self.v1 - self.v0;
+        let edge2 = self.v2 - self.v0;
+
+        let h = ray.direction().cross(edge2);
+        let a = edge1.dot(h);
+
+        if a.abs() < eps {
+            return no_hit(ray, self.material);
+        }
+
+        let f = 1.0 / a;
+        let s = ray.origin() - self.v0;
+        let u = f * s.dot(h);
+
+        if !(0.0..=1.0).contains(&u) {
+            return no_hit(ray, self.material);
+        }
+
+        let q = s.cross(edge1);
+        let v = f * ray.direction().dot(q);
+
+        if v < 0.0 || u + v > 1.0 {
+            return no_hit(ray, self.material);
+        }
+
+        let t = f * edge2.dot(q);
+
+        if t > 0.001 {
+            let hit_pos = ray.at(t);
+            let normal = edge1.cross(edge2).normalize();
+
+            return HitInfo {
+                has_hit: true,
+                t: t as f64,
+                pos: hit_pos,
+                sent_ray: ray.clone(),
+                normal,
+                material: self.material,
+            };
+        }
+
+        no_hit(ray, self.material)
+    }
+
+    fn set_material(&mut self, material: Material) {
+        self.material = material;
+    }
+}
+
+impl Hittable for Plane {
+    fn hit(&self, ray: &Ray) -> HitInfo {
+        let eps = 1e-6;
+
+        let denom = self.normal.dot(ray.direction());
+        if denom.abs() < eps {
+            return no_hit(ray, self.material);
+        }
+
+        let t = (self.center - ray.origin()).dot(self.normal) / denom;
+        if t <= 0.001 {
+            return no_hit(ray, self.material);
+        }
+
+        let hit_pos = ray.at(t);
+        let n = self.normal.normalize();
+
+        let tangent = if n.x.abs() > 0.9 {
+            Vec3::Y
+        } else {
+            Vec3::X
+        };
+
+        let u = n.cross(tangent).normalize();
+        let v = n.cross(u);
+
+        let local = hit_pos - self.center;
+        let u_dist = local.dot(u);
+        let v_dist = local.dot(v);
+
+        if u_dist.abs() > self.width * 0.5 || v_dist.abs() > self.length * 0.5 {
+            return no_hit(ray, self.material);
+        }
+
+        HitInfo {
+            has_hit: true,
+            t: t as f64,
+            pos: hit_pos,
+            sent_ray: ray.clone(),
+            normal: n,
+            material: self.material,
+        }
+    }
+
+    fn set_material(&mut self, material: Material) {
+        self.material = material;
+    }
+}
+
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray) -> HitInfo {
         let oc = ray.origin() - self.pos;
@@ -59,17 +188,21 @@ impl Hittable for Sphere {
             }
         }
 
-        HitInfo {
-            has_hit: false,
-            t: f64::INFINITY,
-            pos: Vec3::ZERO,
-            sent_ray: ray.clone(),
-            normal: Vec3::ZERO,
-            material: self.material
-        }
+        no_hit(ray, self.material)
     }
 
     fn set_material(&mut self, material: Material) {
         self.material = material;
+    }
+}
+
+fn no_hit(ray: &Ray, material: Material) -> HitInfo {
+    HitInfo {
+        has_hit: false,
+        t: f64::INFINITY,
+        pos: Vec3::ZERO,
+        sent_ray: ray.clone(),
+        normal: Vec3::ZERO,
+        material,
     }
 }
