@@ -15,6 +15,8 @@ mod renderer;
 mod material;
 mod model;
 mod importer;
+mod gpu_types;
+mod compute;
 
 #[tokio::main]
 async fn main() {
@@ -28,7 +30,8 @@ async fn main() {
     loop {
         let frame_start = Instant::now();
 
-        renderer.render(&camera, &scene, &mut canvas);
+        renderer.render_gpu(&camera, &scene, &mut canvas);
+        
         println!("{:?}", camera.ray());
         canvas.set_window_title(&format!("frame in: {}ms   fps: {:.2}   sample count: {}",
                                          frame_start.elapsed().as_millis(),

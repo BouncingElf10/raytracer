@@ -20,6 +20,15 @@ pub struct Canvas {
     render_pipeline: wgpu::RenderPipeline,
     pub(crate) accum_buffer: Vec<Color>,
     pub(crate) sample_count: u32,
+    pub compute_pipeline: Option<wgpu::ComputePipeline>,
+    pub compute_bind_group: Option<wgpu::BindGroup>,
+    pub sphere_buffer: Option<wgpu::Buffer>,
+    pub triangle_buffer: Option<wgpu::Buffer>,
+    pub plane_buffer: Option<wgpu::Buffer>,
+    pub ray_buffer: Option<wgpu::Buffer>,
+    pub hit_buffer: Option<wgpu::Buffer>,
+    pub staging_buffer: Option<wgpu::Buffer>,
+    pub counts_buffer: Option<wgpu::Buffer>,
 }
 
 impl Canvas {
@@ -193,7 +202,10 @@ impl Canvas {
                 cache: None,
             });
 
-        Self { width, height, window, events, glfw, surface, device, queue, config, pixel_buffer, pixel_texture, bind_group, bind_group_layout, render_pipeline, accum_buffer, sample_count }
+        Self { width, height, window, events, glfw, surface, device, queue, config, pixel_buffer,
+            pixel_texture, bind_group, bind_group_layout, render_pipeline, accum_buffer, sample_count,
+            compute_pipeline: None, compute_bind_group: None, sphere_buffer: None, triangle_buffer: None,
+            plane_buffer: None, ray_buffer: None, hit_buffer: None, staging_buffer: None, counts_buffer: None }
     }
 
     fn resize(&mut self, width: u32, height: u32) {
@@ -344,6 +356,10 @@ impl Canvas {
         self.sample_count = 0;
     }
 
+    pub fn pixel_count(&self) -> u32 {
+        self.width * self.height
+    }
+    
     pub fn is_open(&self) -> bool {
         !self.window.should_close()
     }

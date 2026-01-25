@@ -17,4 +17,20 @@ impl Material {
     pub fn default() -> Self {
         Self { albedo: Color::new(0.5, 0.5, 0.5), roughness: 0.0, metallic: 0.0, emission: 0.0 }
     }
+
+    pub fn albedo(&self) -> &Color {
+        &self.albedo
+    }
+
+    pub fn emission(&self) -> f32 {
+        self.emission
+    }
+
+    pub fn metallic(&self) -> f32 {
+        self.metallic
+    }
+
+    pub fn roughness(&self) -> f32 {
+        self.roughness
+    }
 }

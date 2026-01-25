@@ -1,3 +1,4 @@
+use std::any::Any;
 use glam::Vec3;
 use crate::material::Material;
 use crate::model::Mesh;
@@ -6,6 +7,7 @@ use crate::ray::Ray;
 pub trait Hittable {
     fn hit(&self, ray: &Ray) -> HitInfo;
     fn set_material(&mut self, material: Material);
+    fn as_any(&self) -> &dyn Any;
 }
 #[derive(Debug, Clone, Copy)]
 pub struct HitInfo {
@@ -27,6 +29,18 @@ impl Sphere {
     pub fn new(pos: Vec3, radius: f32, material: Material) -> Self {
         Self { pos, radius, material }
     }
+
+    pub fn center(&self) -> Vec3 {
+        self.pos
+    }
+
+    pub fn radius(&self) -> f32 {
+        self.radius
+    }
+
+    pub fn material(&self) -> &Material {
+        &self.material
+    }
 }
 
 pub struct Plane {
@@ -41,6 +55,26 @@ impl Plane {
     pub fn new(center: Vec3, normal: Vec3, width: f32, length: f32, material: Material) -> Self {
         Self { center, normal, width, length, material }
     }
+
+    pub fn center(&self) -> Vec3 {
+        self.center
+    }
+
+    pub fn normal(&self) -> Vec3 {
+        self.normal
+    }
+
+    pub fn width(&self) -> f32 {
+        self.width
+    }
+
+    pub fn length(&self) -> f32 {
+        self.length
+    }
+
+    pub fn material(&self) -> &Material {
+        &self.material
+    }
 }
 
 pub struct Triangle {
@@ -53,6 +87,22 @@ pub struct Triangle {
 impl Triangle {
     pub fn new(v0: Vec3, v1: Vec3, v2: Vec3, material: Material) -> Self {
         Self { v0, v1, v2, material }
+    }
+
+    pub fn v0(&self) -> Vec3 {
+        self.v0
+    }
+
+    pub fn v1(&self) -> Vec3 {
+        self.v1
+    }
+
+    pub fn v2(&self) -> Vec3 {
+        self.v2
+    }
+
+    pub fn material(&self) -> &Material {
+        &self.material
     }
 }
 
@@ -107,6 +157,9 @@ impl Hittable for Triangle {
     fn set_material(&mut self, material: Material) {
         self.material = material;
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 impl Hittable for Plane {
@@ -156,6 +209,9 @@ impl Hittable for Plane {
     fn set_material(&mut self, material: Material) {
         self.material = material;
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 impl Hittable for Sphere {
@@ -195,6 +251,9 @@ impl Hittable for Sphere {
     fn set_material(&mut self, material: Material) {
         self.material = material;
     }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
 }
 
 impl Hittable for Mesh {
@@ -212,6 +271,9 @@ impl Hittable for Mesh {
         self.faces.iter_mut().for_each(|face| {
             face.set_material(material);
         });
+    }
+    fn as_any(&self) -> &dyn Any {
+        self
     }
 }
 
