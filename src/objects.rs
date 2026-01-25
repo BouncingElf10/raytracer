@@ -1,12 +1,13 @@
 use glam::Vec3;
 use crate::material::Material;
+use crate::model::Mesh;
 use crate::ray::Ray;
 
 pub trait Hittable {
     fn hit(&self, ray: &Ray) -> HitInfo;
     fn set_material(&mut self, material: Material);
 }
-
+#[derive(Debug, Clone, Copy)]
 pub struct HitInfo {
     pub has_hit: bool,
     pub t: f64,
@@ -193,6 +194,24 @@ impl Hittable for Sphere {
 
     fn set_material(&mut self, material: Material) {
         self.material = material;
+    }
+}
+
+impl Hittable for Mesh {
+    fn hit(&self, ray: &Ray) -> HitInfo {
+        *self.faces
+            .iter()
+            .flat_map(|face| face.to_tris())
+            .map(|tri| tri.hit(ray))
+            .filter(|hit| hit.has_hit)
+            .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap())
+            .get_or_insert(no_hit(ray, Material::default()))
+    }
+
+    fn set_material(&mut self, material: Material) {
+        self.faces.iter_mut().for_each(|face| {
+            face.set_material(material);
+        });
     }
 }
 

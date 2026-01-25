@@ -2,7 +2,7 @@ use crate::camera::Camera;
 use glam::Vec3;
 use rand::random;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct Ray {
     origin: Vec3,
     direction: Vec3
