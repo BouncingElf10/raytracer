@@ -32,6 +32,10 @@ impl Color {
         ((self.r * 255.0) as u32) << 16 | ((self.g * 255.0) as u32) << 8 | (self.b * 255.0) as u32
     }
 
+    pub fn clamp(&self, min: f32, max: f32) -> Self {
+        Color::new(self.r.clamp(min, max), self.g.clamp(min, max), self.b.clamp(min, max))
+    }
+
     pub fn black() -> Self {
         Self::new(0.0, 0.0, 0.0)
     }
