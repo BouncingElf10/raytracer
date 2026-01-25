@@ -56,7 +56,8 @@ fn recursive_bounce(ray: Ray, color: Color, scene: &Scene, bounce_num: u8) -> Co
 
     if let Some(info) = closest_hit {
         if info.material.emission > 0.0 {
-            return color * info.material.albedo * info.material.emission;
+            let color = color * info.material.albedo * info.material.emission;
+            return color;
         }
 
         if bounce_num >= MAX_RECURSION {
