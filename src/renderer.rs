@@ -2,7 +2,7 @@ use std::ops::Mul;
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::objects::HitInfo;
-use crate::ray;
+use crate::{color, ray};
 use crate::ray::Ray;
 use crate::scene::Scene;
 use crate::window::Canvas;
@@ -24,7 +24,6 @@ impl Renderer {
             let sample = recursive_bounce(ray, Color::white(), scene, 0);
 
             let idx = (y * canvas.width() + x) as usize;
-
             canvas.accum_buffer[idx] = canvas.accum_buffer[idx] + sample;
 
             let avg = canvas.accum_buffer[idx] / (canvas.sample_count as f32 + 1.0);
@@ -65,11 +64,16 @@ fn recursive_bounce(ray: Ray, color: Color, scene: &Scene, bounce_num: u8) -> Co
         }
 
         let normal = info.normal.normalize();
-        let bounce_dir = ray::random_cosine_hemisphere(normal);
-        let bounce_ray = Ray::new(info.pos + normal * 0.001, bounce_dir);
-        let new_color = color * info.material.albedo;
+        let diffuse_dir = ray::random_cosine_hemisphere(normal);
+        let diffuse_ray = Ray::new(info.pos + normal * 0.001, diffuse_dir);
 
-        recursive_bounce(bounce_ray, new_color, scene, bounce_num + 1)
+        let specular_dir = ray.reflect(info.normal);
+        let specular_ray = Ray::new(info.pos + normal * 0.001, specular_dir.direction().normalize());
+        let final_ray = ray::lerp(&specular_ray, &diffuse_ray, info.material.roughness);
+
+        let final_color = color * info.material.albedo * (info.material.metallic * specular_ray.dot() + (1.0 - info.material.metallic) * diffuse_ray.dot());
+
+        recursive_bounce(final_ray, final_color, scene, bounce_num + 1)
     } else {
         Color::black()
     }

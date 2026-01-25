@@ -95,3 +95,7 @@ pub fn random_cosine_hemisphere(normal: Vec3) -> Vec3 {
         normal * local.z).normalize()
 }
 
+pub fn lerp(ray1: &Ray, ray2: &Ray, t: f32) -> Ray {
+    Ray::new(ray1.origin() + (ray2.origin() - ray1.origin()) * t, ray1.direction() + (ray2.direction() - ray1.direction()) * t)
+}
+
