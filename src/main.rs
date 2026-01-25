@@ -13,6 +13,8 @@ mod ray;
 mod movement;
 mod renderer;
 mod material;
+mod model;
+mod importer;
 
 #[tokio::main]
 async fn main() {

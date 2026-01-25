@@ -1,6 +1,8 @@
 use glam::Vec3;
 use crate::color::Color;
+use crate::importer::import_obj;
 use crate::material::Material;
+use crate::model::Mesh;
 use crate::objects::{Hittable, Plane, Sphere};
 
 pub struct Scene {
@@ -64,7 +66,7 @@ pub fn create_scene() -> Scene {
     scene.add_object(Box::new(Plane::new(
         Vec3::new(0.0, 2.4, 0.0), Vec3::new(0.0, -1.0, 0.0),
         3.0, 3.0,
-        Material { albedo: Color::new(1.0, 1.0, 1.0), roughness: 0.0, metallic: 0.0, emission: 15.0 },
+        Material { albedo: Color::new(1.0, 1.0, 1.0), roughness: 0.0, metallic: 0.0, emission: 1.0 },
     )));
 
     // Spheres
@@ -82,6 +84,10 @@ pub fn create_scene() -> Scene {
         Vec3::new(1.5, -1.5, 0.0), 1.0,
         Material { albedo: Color::new(0.9, 0.6, 0.2), roughness: 0.6, metallic: 0.0, emission: 0.0 },
     )));
+
+    let mut mesh = import_obj("src/models/teapot.obj");
+    mesh.set_material(Material::new(Color::new(0.9, 0.9, 0.9), 1.0, 0.0, 0.0));
+    scene.add_object(Box::new(mesh));
 
     scene
 }

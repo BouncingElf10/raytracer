@@ -28,7 +28,6 @@ impl Renderer {
 
             let avg = canvas.accum_buffer[idx] / (canvas.sample_count as f32 + 1.0);
             canvas.paint_pixel(x, y, avg.gamma_correct().to_u32());
-
         });
 
         canvas.sample_count += 1;
