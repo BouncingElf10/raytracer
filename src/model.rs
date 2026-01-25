@@ -26,6 +26,12 @@ impl Mesh {
     pub fn append_face(&mut self, face: Face) {
         self.faces.push(face);
     }
+    pub fn get_triangles(&self) -> Vec<Triangle> {
+        self.faces
+            .iter()
+            .flat_map(|face| face.to_tris())
+            .collect()
+    }
 }
 
 impl Face {
