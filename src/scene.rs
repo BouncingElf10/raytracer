@@ -64,7 +64,7 @@ pub fn create_scene() -> Scene {
     scene.add_object(Box::new(Plane::new(
         Vec3::new(0.0, 2.4, 0.0), Vec3::new(0.0, -1.0, 0.0),
         3.0, 3.0,
-        Material { albedo: Color::new(1.0, 1.0, 1.0), roughness: 0.0, metallic: 0.0, emission: 1.0 },
+        Material { albedo: Color::new(1.0, 1.0, 1.0), roughness: 0.0, metallic: 0.0, emission: 15.0 },
     )));
 
     // Spheres

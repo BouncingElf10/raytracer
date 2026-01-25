@@ -40,6 +40,10 @@ impl Color {
     }
 }
 
+pub fn lerp(color1: &Color, color2: &Color, t: f32) -> Color {
+    color1.mul(1.0 - t) + color2.mul(t)
+}
+
 impl Add for Color {
     type Output = Self;
 
