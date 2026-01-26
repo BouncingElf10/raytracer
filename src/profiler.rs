@@ -3,7 +3,7 @@ use std::time::Instant;
 use indexmap::IndexMap;
 use once_cell::sync::Lazy;
 
-struct Profiler {
+pub struct Profiler {
     stack: Vec<(String, Instant)>,
     frame_entries: IndexMap<(String, usize), (f64, u32)>,
     frame_order: Vec<(String, usize)>,

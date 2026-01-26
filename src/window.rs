@@ -1,8 +1,8 @@
-use glfw::{fail_on_errors, Action, Context, CursorMode, Glfw, GlfwReceiver, Key, PWindow, WindowEvent};
-use glfw::ffi::{glfwSetCursor, glfwSetInputMode};
-use wgpu::TextureUsages;
 use crate::color::Color;
+use glfw::{fail_on_errors, Action, Context, CursorMode, Glfw, GlfwReceiver, Key, PWindow, WindowEvent};
+use wgpu::TextureUsages;
 
+#[allow(dead_code)]
 pub struct Canvas {
     width: u32,
     height: u32,
@@ -317,10 +317,6 @@ impl Canvas {
         }
     }
 
-    pub fn clear_pixels(&mut self, color: u32) {
-        self.pixel_buffer.fill(color);
-    }
-
     pub fn update(&mut self) {
         self.glfw.poll_events();
         let events: Vec<_> = glfw::flush_messages(&self.events).collect();
@@ -330,25 +326,7 @@ impl Canvas {
     }
 
     pub fn present(&mut self) -> Result<(), wgpu::SurfaceError> {
-        self.render(wgpu::Color {
-            r: 0.0,
-            g: 0.0,
-            b: 0.0,
-            a: 1.0,
-        })
-    }
-
-    pub fn render_default(&mut self) -> Result<(), wgpu::SurfaceError> {
-        self.render(wgpu::Color {
-            r: 0.75,
-            g: 0.5,
-            b: 0.25,
-            a: 1.0,
-        })
-    }
-
-    pub fn render_clear(&mut self, color: wgpu::Color) -> Result<(), wgpu::SurfaceError> {
-        self.render(color)
+        self.render(wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a: 1.0, })
     }
 
     pub fn reset_accumulation(&mut self) {
@@ -390,9 +368,5 @@ impl Canvas {
 
     pub fn queue(&self) -> &wgpu::Queue {
         &self.queue
-    }
-
-    pub fn surface_format(&self) -> wgpu::TextureFormat {
-        self.config.format
     }
 }

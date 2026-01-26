@@ -3,6 +3,7 @@ use crate::color::Color;
 use crate::material::Material;
 use crate::objects::Triangle;
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub struct Vertex {
     position: Vec3,

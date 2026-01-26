@@ -12,14 +12,6 @@ impl Color {
         Self { r, g, b }
     }
 
-    pub fn newFromNormals(r: f32, g: f32, b: f32) -> Self {
-        Self {
-            r: (r + 1.0) * 0.5,
-            g: (g + 1.0) * 0.5,
-            b: (b + 1.0) * 0.5
-        }
-    }
-
     pub fn gamma_correct(self) -> Self {
         Self {
             r: self.r.sqrt(),
@@ -32,6 +24,7 @@ impl Color {
         ((self.r * 255.0) as u32) << 16 | ((self.g * 255.0) as u32) << 8 | (self.b * 255.0) as u32
     }
 
+    #[allow(dead_code)]
     pub fn clamp(&self, min: f32, max: f32) -> Self {
         Color::new(self.r.clamp(min, max), self.g.clamp(min, max), self.b.clamp(min, max))
     }
@@ -44,6 +37,7 @@ impl Color {
     }
 }
 
+#[allow(dead_code)]
 pub fn lerp(color1: &Color, color2: &Color, t: f32) -> Color {
     color1.mul(1.0 - t) + color2.mul(t)
 }

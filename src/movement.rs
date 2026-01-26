@@ -26,7 +26,8 @@ impl MovementState {
 pub fn apply_movements(camera: &mut Camera, canvas: &Canvas, delta_time: f32, state: &mut MovementState) -> bool {
     let mut moved = false;
     let mut ray = camera.ray();
-    if let (mouse_x, mouse_y) = canvas.get_mouse_pos() {
+    let (mouse_x, mouse_y) = canvas.get_mouse_pos();
+    {
         if state.first_mouse {
             state.last_mouse_x = mouse_x;
             state.last_mouse_y = mouse_y;

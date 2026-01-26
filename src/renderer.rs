@@ -1,16 +1,13 @@
-use std::ops::Mul;
-use std::time::Duration;
-use wgpu::naga::SwitchValue::Default;
-use wgpu::PollType;
 use crate::camera::Camera;
 use crate::color::Color;
-use crate::objects::HitInfo;
-use crate::{color, compute, ray};
 use crate::gpu_types::{GpuHitInfo, GpuRay};
+use crate::objects::HitInfo;
 use crate::profiler::{profiler_start, profiler_stop};
 use crate::ray::Ray;
 use crate::scene::Scene;
 use crate::window::Canvas;
+use crate::{compute, ray};
+use wgpu::PollType;
 
 pub struct Renderer {
 
@@ -22,7 +19,7 @@ impl Renderer {
     pub fn new() -> Self {
         Self {}
     }
-
+    #[allow(dead_code)]
     pub fn render(&self, camera: &Camera, scene: &Scene, canvas: &mut Canvas) {
         camera.for_each_pixel(|x, y| {
             let ray = ray::get_ray_from_screen(camera, x, y);
@@ -163,7 +160,8 @@ impl Renderer {
 
         profiler_stop("cpu render");
     }
-
+    
+    #[allow(dead_code)]
     pub fn clear(&self, camera: &Camera, canvas: &mut Canvas) {
         camera.for_each_pixel(|x, y| {
             canvas.paint_pixel(x, y, Color::black().to_u32());

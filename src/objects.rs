@@ -9,6 +9,7 @@ pub trait Hittable {
     fn set_material(&mut self, material: Material);
     fn as_any(&self) -> &dyn Any;
 }
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub struct HitInfo {
     pub has_hit: bool,

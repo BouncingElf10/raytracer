@@ -7,7 +7,7 @@ pub struct Ray {
     origin: Vec3,
     direction: Vec3
 }
-
+#[allow(dead_code)]
 impl Ray {
     pub fn new(origin: Vec3, direction: Vec3) -> Self {
         Self { origin, direction }

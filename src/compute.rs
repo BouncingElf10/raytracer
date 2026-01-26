@@ -1,13 +1,11 @@
-use bytemuck::{Pod, Zeroable};
-use glam::Vec3;
-use wgpu::util::DeviceExt;
 use crate::gpu_types::{vec4_to_vec3, GpuHitInfo, GpuPlane, GpuRay, GpuSphere, GpuTriangle};
 use crate::material::Material;
-use crate::model::Mesh;
-use crate::objects::{Hittable, HitInfo, Sphere, Plane, Triangle};
+use crate::objects::HitInfo;
 use crate::ray::Ray;
 use crate::scene::Scene;
 use crate::window::Canvas;
+use bytemuck::{Pod, Zeroable};
+use wgpu::util::DeviceExt;
 
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
@@ -201,90 +199,11 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
 }
 
 fn extract_scene_data(scene: &Scene) -> (Vec<GpuSphere>, Vec<GpuTriangle>, Vec<GpuPlane>) {
-    let mut spheres = Vec::new();
-    let mut triangles = Vec::new();
-    let mut planes = Vec::new();
+    let primitives = scene.export_gpu_data();
 
-    for obj in scene.get_objects() {
-        if let Some(sphere) = obj.as_any().downcast_ref::<Sphere>() {
-            let center = sphere.center();
-            let mat = sphere.material();
-            let albedo = mat.albedo();
-
-            spheres.push(GpuSphere {
-                center: [center.x, center.y, center.z],
-                radius: sphere.radius(),
-                albedo: [albedo.r, albedo.g, albedo.b],
-                emission: mat.emission(),
-                metallic: mat.metallic(),
-                roughness: mat.roughness(),
-                _padding: [0.0, 0.0],
-            });
-        }
-        else if let Some(plane) = obj.as_any().downcast_ref::<Plane>() {
-            let center = plane.center();
-            let normal = plane.normal();
-            let mat = plane.material();
-            let albedo = mat.albedo();
-
-            planes.push(GpuPlane {
-                center: [center.x, center.y, center.z, 0.0],
-                normal: [normal.x, normal.y, normal.z, 0.0],
-                width: plane.width(),
-                length: plane.length(),
-                _pad2: [0.0, 0.0],
-                albedo: [albedo.r, albedo.g, albedo.b, 0.0],
-                emission: mat.emission(),
-                metallic: mat.metallic(),
-                roughness: mat.roughness(),
-                _pad3: 0.0,
-            });
-        }
-        else if let Some(triangle) = obj.as_any().downcast_ref::<Triangle>() {
-            let v0 = triangle.v0();
-            let v1 = triangle.v1();
-            let v2 = triangle.v2();
-            let mat = triangle.material();
-            let albedo = mat.albedo();
-
-            triangles.push(GpuTriangle {
-                v0: [v0.x, v0.y, v0.z],
-                _pad0: 0.0,
-                v1: [v1.x, v1.y, v1.z],
-                _pad1: 0.0,
-                v2: [v2.x, v2.y, v2.z],
-                _pad2: 0.0,
-                albedo: [albedo.r, albedo.g, albedo.b],
-                emission: mat.emission(),
-                metallic: mat.metallic(),
-                roughness: mat.roughness(),
-                _padding: [0.0, 0.0],
-            });
-        }
-        else if let Some(mesh) = obj.as_any().downcast_ref::<Mesh>() {
-            for tri in mesh.get_triangles() {
-                let v0 = tri.v0();
-                let v1 = tri.v1();
-                let v2 = tri.v2();
-                let mat = tri.material();
-                let albedo = mat.albedo();
-
-                triangles.push(GpuTriangle {
-                    v0: [v0.x, v0.y, v0.z],
-                    _pad0: 0.0,
-                    v1: [v1.x, v1.y, v1.z],
-                    _pad1: 0.0,
-                    v2: [v2.x, v2.y, v2.z],
-                    _pad2: 0.0,
-                    albedo: [albedo.r, albedo.g, albedo.b],
-                    emission: mat.emission(),
-                    metallic: mat.metallic(),
-                    roughness: mat.roughness(),
-                    _padding: [0.0, 0.0],
-                });
-            }
-        }
-    }
+    let mut spheres = primitives.0;
+    let mut triangles = primitives.1;
+    let mut planes = primitives.2;
 
     if spheres.is_empty() {
         spheres.push(GpuSphere {

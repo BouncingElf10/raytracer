@@ -65,47 +65,11 @@ impl Scene {
             }
 
             else if let Some(triangle) = obj.as_any().downcast_ref::<Triangle>() {
-                let v0 = triangle.v0();
-                let v1 = triangle.v1();
-                let v2 = triangle.v2();
-                let mat = triangle.material();
-                let albedo = mat.albedo();
-
-                triangles.push(GpuTriangle {
-                    v0: [v0.x, v0.y, v0.z],
-                    _pad0: 0.0,
-                    v1: [v1.x, v1.y, v1.z],
-                    _pad1: 0.0,
-                    v2: [v2.x, v2.y, v2.z],
-                    _pad2: 0.0,
-                    albedo: [albedo.r, albedo.g, albedo.b],
-                    emission: mat.emission(),
-                    metallic: mat.metallic(),
-                    roughness: mat.roughness(),
-                    _padding: [0.0, 0.0],
-                });
+                triangles.push(triangle_to_gpu_triangle(triangle));
             }
             else if let Some(mesh) = obj.as_any().downcast_ref::<Mesh>() {
                 for tri in mesh.get_triangles() {
-                    let v0 = tri.v0();
-                    let v1 = tri.v1();
-                    let v2 = tri.v2();
-                    let mat = tri.material();
-                    let albedo = mat.albedo();
-
-                    triangles.push(GpuTriangle {
-                        v0: [v0.x, v0.y, v0.z],
-                        _pad0: 0.0,
-                        v1: [v1.x, v1.y, v1.z],
-                        _pad1: 0.0,
-                        v2: [v2.x, v2.y, v2.z],
-                        _pad2: 0.0,
-                        albedo: [albedo.r, albedo.g, albedo.b],
-                        emission: mat.emission(),
-                        metallic: mat.metallic(),
-                        roughness: mat.roughness(),
-                        _padding: [0.0, 0.0],
-                    });
+                    triangles.push(triangle_to_gpu_triangle(&tri));
                 }
             }
         }
@@ -118,15 +82,33 @@ impl Scene {
     }
 }
 
-fn vec3_to_array(v: glam::Vec3) -> [f32; 3] {
-    [v.x, v.y, v.z]
+pub fn triangle_to_gpu_triangle(tri: &Triangle) -> GpuTriangle {
+    let v0 = tri.v0();
+    let v1 = tri.v1();
+    let v2 = tri.v2();
+    let mat = tri.material();
+    let albedo = mat.albedo();
+
+    GpuTriangle {
+        v0: [v0.x, v0.y, v0.z],
+        _pad0: 0.0,
+        v1: [v1.x, v1.y, v1.z],
+        _pad1: 0.0,
+        v2: [v2.x, v2.y, v2.z],
+        _pad2: 0.0,
+        albedo: [albedo.r, albedo.g, albedo.b],
+        emission: mat.emission(),
+        metallic: mat.metallic(),
+        roughness: mat.roughness(),
+        _padding: [0.0, 0.0],
+    }
 }
 
 pub fn create_scene() -> Scene {
     profiler_start("create scene");
     profiler_start("load other models");
     let mut scene = Scene::new();
-    
+
     // Floor
     scene.add_object(Box::new(Plane::new(
         Vec3::new(0.0, -2.5, 0.0), Vec3::new(0.0, 1.0, 0.0),
@@ -184,14 +166,14 @@ pub fn create_scene() -> Scene {
         Vec3::new(1.5, -1.5, 0.0), 1.0,
         Material { albedo: Color::new(0.9, 0.6, 0.2), roughness: 0.6, metallic: 0.0, emission: 0.0 },
     )));
-    
+
     profiler_stop("load other models");
     profiler_start("load teapot");
-    
+
     let mut mesh = import_obj("src/models/teapot.obj");
     mesh.set_material(Material::new(Color::new(0.9, 0.9, 0.9), 1.0, 0.0, 0.0));
     scene.add_object(Box::new(mesh));
-    
+
     profiler_stop("load teapot");
     profiler_stop("create scene");
     scene
