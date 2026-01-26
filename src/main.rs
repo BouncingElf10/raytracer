@@ -31,8 +31,7 @@ async fn main() {
         let frame_start = Instant::now();
 
         renderer.render_gpu(&camera, &scene, &mut canvas);
-        
-        println!("{:?}", camera.ray());
+
         canvas.set_window_title(&format!("frame in: {}ms   fps: {:.2}   sample count: {}",
                                          frame_start.elapsed().as_millis(),
                                          1.0 / frame_start.elapsed().as_secs_f32(),
