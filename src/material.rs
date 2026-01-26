@@ -1,4 +1,3 @@
-use glam::Vec3;
 use crate::color::Color;
 
 #[derive(Clone, Copy, Debug)]

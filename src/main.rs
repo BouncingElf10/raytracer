@@ -1,8 +1,7 @@
-use std::time::Instant;
-use glam::Vec3;
 use crate::camera::Camera;
 use crate::ray::Ray;
 use crate::window::Canvas;
+use glam::Vec3;
 
 mod camera;
 mod window;
