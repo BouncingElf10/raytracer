@@ -5,6 +5,7 @@ use crate::objects::{Hittable, Plane, Sphere, Triangle};
 use glam::Vec3;
 use crate::gpu_types::{GpuPlane, GpuSphere, GpuTriangle};
 use crate::model::Mesh;
+use crate::profiler::{profiler_start, profiler_stop};
 
 pub struct Scene {
     objects: Vec<Box<dyn Hittable>>
@@ -21,6 +22,7 @@ impl Scene {
     }
 
     pub fn export_gpu_data(&self) -> (Vec<GpuSphere>, Vec<GpuTriangle>, Vec<GpuPlane>) {
+        profiler_start("export gpu data");
         let mut spheres = Vec::new();
         let mut triangles = Vec::new();
         let mut planes = Vec::new();
@@ -107,7 +109,7 @@ impl Scene {
                 }
             }
         }
-
+        profiler_stop("export gpu data");
         (spheres, triangles, planes)
     }
 
@@ -121,6 +123,7 @@ fn vec3_to_array(v: glam::Vec3) -> [f32; 3] {
 }
 
 pub fn create_scene() -> Scene {
+    profiler_start("create scene");
     let mut scene = Scene::new();
 
     // Floor
@@ -180,10 +183,14 @@ pub fn create_scene() -> Scene {
         Vec3::new(1.5, -1.5, 0.0), 1.0,
         Material { albedo: Color::new(0.9, 0.6, 0.2), roughness: 0.6, metallic: 0.0, emission: 0.0 },
     )));
-
+    
+    profiler_start("load teapot");
+    
     let mut mesh = import_obj("src/models/teapot.obj");
     mesh.set_material(Material::new(Color::new(0.9, 0.9, 0.9), 1.0, 0.0, 0.0));
     scene.add_object(Box::new(mesh));
-
+    
+    profiler_stop("load teapot");
+    profiler_stop("create scene");
     scene
 }

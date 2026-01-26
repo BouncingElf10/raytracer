@@ -7,6 +7,7 @@ use crate::color::Color;
 use crate::objects::HitInfo;
 use crate::{color, compute, ray};
 use crate::gpu_types::{GpuHitInfo, GpuRay};
+use crate::profiler::{profiler_start, profiler_stop};
 use crate::ray::Ray;
 use crate::scene::Scene;
 use crate::window::Canvas;
@@ -38,6 +39,9 @@ impl Renderer {
     }
 
     pub fn render_gpu(&self, camera: &Camera, scene: &Scene, canvas: &mut Canvas) {
+
+        profiler_start("render gpu");
+
         if canvas.compute_pipeline.is_none() {
             compute::setup_compute_pipeline(canvas, scene);
         }
@@ -99,6 +103,9 @@ impl Renderer {
         canvas.device().poll(PollType::Wait { submission_index: None, timeout: None }).expect("GPU was NOT polled");
         pollster::block_on(rx).unwrap().unwrap();
 
+        profiler_stop("render gpu");
+        profiler_start("cpu render");
+
         {
             let data = buffer_slice.get_mapped_range();
             let gpu_hits: &[GpuHitInfo] = bytemuck::cast_slice(&data);
@@ -114,6 +121,8 @@ impl Renderer {
                     if hit_info.material.emission > 0.0 {
                         hit_info.material.albedo * hit_info.material.emission
                     } else {
+                        profiler_start("ray calculations");
+
                         let normal = hit_info.normal.normalize();
                         let diffuse_dir = ray::random_cosine_hemisphere(normal);
                         let diffuse_ray = Ray::new(hit_info.pos + normal * 0.001, diffuse_dir);
@@ -126,20 +135,33 @@ impl Renderer {
                             (hit_info.material.metallic * specular_ray.dot() +
                                 (1.0 - hit_info.material.metallic) * diffuse_ray.dot());
 
-                        recursive_bounce(final_ray, final_color, scene, 1)
+                        profiler_stop("ray calculations");
+
+                        profiler_start("recursive bounce");
+
+                        let color = recursive_bounce(final_ray, final_color, scene, 1);
+
+                        profiler_stop("recursive bounce");
+                        color
                     }
                 } else {
                     Color::black()
                 };
 
+                profiler_start("buffer write");
+
                 canvas.accum_buffer[idx] = canvas.accum_buffer[idx] + sample;
                 let avg = canvas.accum_buffer[idx] / (canvas.sample_count as f32 + 1.0);
                 canvas.paint_pixel(x, y, avg.gamma_correct().to_u32());
+
+                profiler_stop("buffer write");
             });
         }
 
         canvas.staging_buffer.as_ref().unwrap().unmap();
         canvas.sample_count += 1;
+
+        profiler_stop("cpu render");
     }
 
     pub fn clear(&self, camera: &Camera, canvas: &mut Canvas) {

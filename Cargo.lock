@@ -1619,6 +1619,8 @@ dependencies = [
  "futures",
  "glam",
  "glfw",
+ "indexmap",
+ "once_cell",
  "pollster",
  "rand 0.10.0-rc.7",
  "tokio",
