@@ -124,8 +124,9 @@ fn vec3_to_array(v: glam::Vec3) -> [f32; 3] {
 
 pub fn create_scene() -> Scene {
     profiler_start("create scene");
+    profiler_start("load other models");
     let mut scene = Scene::new();
-
+    
     // Floor
     scene.add_object(Box::new(Plane::new(
         Vec3::new(0.0, -2.5, 0.0), Vec3::new(0.0, 1.0, 0.0),
@@ -184,6 +185,7 @@ pub fn create_scene() -> Scene {
         Material { albedo: Color::new(0.9, 0.6, 0.2), roughness: 0.6, metallic: 0.0, emission: 0.0 },
     )));
     
+    profiler_stop("load other models");
     profiler_start("load teapot");
     
     let mut mesh = import_obj("src/models/teapot.obj");
