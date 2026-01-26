@@ -17,6 +17,7 @@ mod model;
 mod importer;
 mod gpu_types;
 mod compute;
+mod profiler;
 
 #[tokio::main]
 async fn main() {
@@ -28,13 +29,15 @@ async fn main() {
     let mut delta_time = 0.0;
 
     loop {
-        let frame_start = Instant::now();
+        profiler::profiler_start("main");
 
         renderer.render_gpu(&camera, &scene, &mut canvas);
 
-        canvas.set_window_title(&format!("frame in: {}ms   fps: {:.2}   sample count: {}",
-                                         frame_start.elapsed().as_millis(),
-                                         1.0 / frame_start.elapsed().as_secs_f32(),
+        profiler::profiler_start("text and movement");
+
+        canvas.set_window_title(&format!("frame in: {:.0}ms   fps: {:.2}   sample count: {}",
+                                         profiler::get_delta_time("main") * 1000.0,
+                                         1.0 /  profiler::get_delta_time("main"),
                                          canvas.sample_count));
         canvas.present().unwrap();
         canvas.update();
@@ -42,7 +45,14 @@ async fn main() {
             canvas.reset_accumulation();
         }
 
-        delta_time = frame_start.elapsed().as_secs_f32();
-        if !canvas.is_open() { break; }
+        profiler::profiler_stop("text and movement");
+
+        delta_time = profiler::get_delta_time("main") as f32;
+        
+        profiler::profiler_stop("main");
+        if !canvas.is_open() {
+            profiler::print_profile();
+            break;
+        }
     }
 }
