@@ -103,41 +103,39 @@ impl Renderer {
             let data = buffer_slice.get_mapped_range();
             let gpu_hits: &[GpuHitInfo] = bytemuck::cast_slice(&data);
 
-            for y in 0..canvas.height() {
-                for x in 0..canvas.width() {
-                    let idx = (y * canvas.width() + x) as usize;
-                    let gpu_hit = &gpu_hits[idx];
-                    let ray = ray::get_ray_from_screen(camera, x, y);
+            camera.for_each_pixel(|x, y| {
+                let idx = (y * canvas.width() + x) as usize;
+                let gpu_hit = &gpu_hits[idx];
+                let ray = ray::get_ray_from_screen(camera, x, y);
 
-                    let sample = if gpu_hit.has_hit != 0 {
-                        let hit_info = compute::convert_hit_info(gpu_hit, &ray);
+                let sample = if gpu_hit.has_hit != 0 {
+                    let hit_info = compute::convert_hit_info(gpu_hit, &ray);
 
-                        if hit_info.material.emission > 0.0 {
-                            hit_info.material.albedo * hit_info.material.emission
-                        } else {
-                            let normal = hit_info.normal.normalize();
-                            let diffuse_dir = ray::random_cosine_hemisphere(normal);
-                            let diffuse_ray = Ray::new(hit_info.pos + normal * 0.001, diffuse_dir);
-
-                            let specular_dir = ray.reflect(hit_info.normal);
-                            let specular_ray = Ray::new(hit_info.pos + normal * 0.001, specular_dir.direction().normalize());
-                            let final_ray = ray::lerp(&specular_ray, &diffuse_ray, hit_info.material.roughness);
-
-                            let final_color = Color::white() * hit_info.material.albedo *
-                                (hit_info.material.metallic * specular_ray.dot() +
-                                    (1.0 - hit_info.material.metallic) * diffuse_ray.dot());
-
-                            recursive_bounce(final_ray, final_color, scene, 1)
-                        }
+                    if hit_info.material.emission > 0.0 {
+                        hit_info.material.albedo * hit_info.material.emission
                     } else {
-                        Color::black()
-                    };
+                        let normal = hit_info.normal.normalize();
+                        let diffuse_dir = ray::random_cosine_hemisphere(normal);
+                        let diffuse_ray = Ray::new(hit_info.pos + normal * 0.001, diffuse_dir);
 
-                    canvas.accum_buffer[idx] = canvas.accum_buffer[idx] + sample;
-                    let avg = canvas.accum_buffer[idx] / (canvas.sample_count as f32 + 1.0);
-                    canvas.paint_pixel(x, y, avg.gamma_correct().to_u32());
-                }
-            }
+                        let specular_dir = ray.reflect(hit_info.normal);
+                        let specular_ray = Ray::new(hit_info.pos + normal * 0.001, specular_dir.direction().normalize());
+                        let final_ray = ray::lerp(&specular_ray, &diffuse_ray, hit_info.material.roughness);
+
+                        let final_color = Color::white() * hit_info.material.albedo *
+                            (hit_info.material.metallic * specular_ray.dot() +
+                                (1.0 - hit_info.material.metallic) * diffuse_ray.dot());
+
+                        recursive_bounce(final_ray, final_color, scene, 1)
+                    }
+                } else {
+                    Color::black()
+                };
+
+                canvas.accum_buffer[idx] = canvas.accum_buffer[idx] + sample;
+                let avg = canvas.accum_buffer[idx] / (canvas.sample_count as f32 + 1.0);
+                canvas.paint_pixel(x, y, avg.gamma_correct().to_u32());
+            });
         }
 
         canvas.staging_buffer.as_ref().unwrap().unmap();
