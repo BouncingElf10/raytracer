@@ -227,19 +227,22 @@ fn extract_scene_data(scene: &Scene) -> (Vec<GpuSphere>, Vec<GpuTriangle>, Vec<G
             let mat = plane.material();
             let albedo = mat.albedo();
 
+            println!("Extracting plane: center=({}, {}, {}), normal=({}, {}, {}), width={}, length={}",
+                     center.x, center.y, center.z,
+                     normal.x, normal.y, normal.z,
+                     plane.width(), plane.length());
+
             planes.push(GpuPlane {
-                center: [center.x, center.y, center.z],
-                _pad0: 0.0,
-                normal: [normal.x, normal.y, normal.z],
-                _pad1: 0.0,
+                center: [center.x, center.y, center.z, 0.0],
+                normal: [normal.x, normal.y, normal.z, 0.0],
                 width: plane.width(),
                 length: plane.length(),
                 _pad2: [0.0, 0.0],
-                albedo: [albedo.r, albedo.g, albedo.b],
+                albedo: [albedo.r, albedo.g, albedo.b, 0.0],
                 emission: mat.emission(),
                 metallic: mat.metallic(),
                 roughness: mat.roughness(),
-                _padding: [0.0, 0.0],
+                _pad3: 0.0,
             });
         }
         else if let Some(triangle) = obj.as_any().downcast_ref::<Triangle>() {
@@ -316,22 +319,18 @@ fn extract_scene_data(scene: &Scene) -> (Vec<GpuSphere>, Vec<GpuTriangle>, Vec<G
         });
     }
 
-    if planes.is_empty() {
-        planes.push(GpuPlane {
-            center: [0.0, 0.0, 0.0],
-            _pad0: 0.0,
-            normal: [0.0, 1.0, 0.0],
-            _pad1: 0.0,
-            width: 0.0,
-            length: 0.0,
-            _pad2: [0.0, 0.0],
-            albedo: [0.0, 0.0, 0.0],
-            emission: 0.0,
-            metallic: 0.0,
-            roughness: 0.0,
-            _padding: [0.0, 0.0],
-        });
-    }
+    planes.push(GpuPlane {
+        center: [0.0, 0.0, 0.0, 0.0],
+        normal: [0.0, 1.0, 0.0, 0.0],
+        width: 0.0,
+        length: 0.0,
+        _pad2: [0.0, 0.0],
+        albedo: [0.0, 0.0, 0.0, 0.0],
+        emission: 0.0,
+        metallic: 0.0,
+        roughness: 0.0,
+        _pad3: 0.0,
+    });
 
     (spheres, triangles, planes)
 }
