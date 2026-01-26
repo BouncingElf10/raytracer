@@ -227,11 +227,6 @@ fn extract_scene_data(scene: &Scene) -> (Vec<GpuSphere>, Vec<GpuTriangle>, Vec<G
             let mat = plane.material();
             let albedo = mat.albedo();
 
-            println!("Extracting plane: center=({}, {}, {}), normal=({}, {}, {}), width={}, length={}",
-                     center.x, center.y, center.z,
-                     normal.x, normal.y, normal.z,
-                     plane.width(), plane.length());
-
             planes.push(GpuPlane {
                 center: [center.x, center.y, center.z, 0.0],
                 normal: [normal.x, normal.y, normal.z, 0.0],

@@ -163,7 +163,6 @@ fn hit_plane(plane: Plane, ray: Ray) -> HitInfo {
 
     let eps = 1e-6;
 
-    // Extract vec3 from vec4 and normalize
     let n = normalize(plane.normal.xyz);
 
     let denom = dot(n, ray.direction);
@@ -180,7 +179,6 @@ fn hit_plane(plane: Plane, ray: Ray) -> HitInfo {
 
     let hit_pos = ray.origin + ray.direction * t;
 
-    // Calculate tangent basis - same as CPU version
     var tangent: vec3<f32>;
     if (abs(n.x) > 0.9) {
         tangent = vec3<f32>(0.0, 1.0, 0.0);
