@@ -32,18 +32,16 @@ pub struct GpuTriangle {
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct GpuPlane {
-    pub(crate) center: [f32; 3],
-    pub(crate) _pad0: f32,
-    pub(crate) normal: [f32; 3],
-    pub(crate) _pad1: f32,
+    pub(crate) center: [f32; 4],
+    pub(crate) normal: [f32; 4],
     pub(crate) width: f32,
     pub(crate) length: f32,
     pub(crate) _pad2: [f32; 2],
-    pub(crate) albedo: [f32; 3],
+    pub(crate) albedo: [f32; 4],
     pub(crate) emission: f32,
     pub(crate) metallic: f32,
     pub(crate) roughness: f32,
-    pub(crate) _padding: [f32; 2],
+    pub(crate) _pad3: f32,
 }
 
 #[repr(C)]

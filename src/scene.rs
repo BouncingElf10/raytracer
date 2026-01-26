@@ -49,18 +49,16 @@ impl Scene {
                 let albedo = mat.albedo();
 
                 planes.push(GpuPlane {
-                    center: [center.x, center.y, center.z],
-                    _pad0: 0.0,
-                    normal: [normal.x, normal.y, normal.z],
-                    _pad1: 0.0,
+                    center: [center.x, center.y, center.z, 0.0],
+                    normal: [normal.x, normal.y, normal.z, 0.0],
                     width: plane.width(),
                     length: plane.length(),
                     _pad2: [0.0, 0.0],
-                    albedo: [albedo.r, albedo.g, albedo.b],
+                    albedo: [albedo.r, albedo.g, albedo.b, 0.0],
                     emission: mat.emission(),
                     metallic: mat.metallic(),
                     roughness: mat.roughness(),
-                    _padding: [0.0, 0.0],
+                    _pad3: 0.0,
                 });
             }
 

@@ -23,14 +23,16 @@ struct Triangle {
 }
 
 struct Plane {
-    center: vec3<f32>,
-    normal: vec3<f32>,
+    center: vec4<f32>,
+    normal: vec4<f32>,
     width: f32,
     length: f32,
-    albedo: vec3<f32>,
+    _pad2: vec2<f32>,
+    albedo: vec4<f32>,
     emission: f32,
     metallic: f32,
     roughness: f32,
+    _pad3: f32,
 }
 
 struct HitInfo {
@@ -160,21 +162,25 @@ fn hit_plane(plane: Plane, ray: Ray) -> HitInfo {
     hit._pad1 = 0.0;
 
     let eps = 1e-6;
-    let denom = dot(plane.normal, ray.direction);
+
+    // Extract vec3 from vec4 and normalize
+    let n = normalize(plane.normal.xyz);
+
+    let denom = dot(n, ray.direction);
 
     if (abs(denom) < eps) {
         return hit;
     }
 
-    let t = dot(plane.center - ray.origin, plane.normal) / denom;
+    let t = dot(plane.center.xyz - ray.origin, n) / denom;
 
     if (t <= 0.001) {
         return hit;
     }
 
     let hit_pos = ray.origin + ray.direction * t;
-    let n = normalize(plane.normal);
 
+    // Calculate tangent basis - same as CPU version
     var tangent: vec3<f32>;
     if (abs(n.x) > 0.9) {
         tangent = vec3<f32>(0.0, 1.0, 0.0);
@@ -182,22 +188,23 @@ fn hit_plane(plane: Plane, ray: Ray) -> HitInfo {
         tangent = vec3<f32>(1.0, 0.0, 0.0);
     }
 
-    let u = normalize(cross(n, tangent));
-    let v = cross(n, u);
+    let u_vec = normalize(cross(n, tangent));
+    let v_vec = cross(n, u_vec);
 
-    let local = hit_pos - plane.center;
-    let u_dist = dot(local, u);
-    let v_dist = dot(local, v);
+    let local = hit_pos - plane.center.xyz;
+    let u_dist = dot(local, u_vec);
+    let v_dist = dot(local, v_vec);
 
     if (abs(u_dist) > plane.width * 0.5 || abs(v_dist) > plane.length * 0.5) {
         return hit;
     }
 
+
     hit.has_hit = 1u;
     hit.t = t;
     hit.pos = vec4<f32>(hit_pos, 0.0);
     hit.normal = vec4<f32>(n, 0.0);
-    hit.albedo = vec4<f32>(plane.albedo, 0.0);
+    hit.albedo = vec4<f32>(plane.albedo);
     hit.emission = plane.emission;
     hit.metallic = plane.metallic;
     hit.roughness = plane.roughness;
