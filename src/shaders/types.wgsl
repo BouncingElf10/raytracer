@@ -54,7 +54,7 @@ struct Counts {
     plane_count: u32,
     width: u32,
     height: u32,
-    _pad0: u32,
+    frame_number: u32,
     _pad1: u32,
     _pad2: u32,
 }

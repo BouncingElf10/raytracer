@@ -27,6 +27,7 @@ pub struct Canvas {
     pub plane_buffer: Option<wgpu::Buffer>,
     pub ray_buffer: Option<wgpu::Buffer>,
     pub hit_buffer: Option<wgpu::Buffer>,
+    pub color_buffer: Option<wgpu::Buffer>,
     pub staging_buffer: Option<wgpu::Buffer>,
     pub counts_buffer: Option<wgpu::Buffer>,
 }
@@ -205,7 +206,7 @@ impl Canvas {
         Self { width, height, window, events, glfw, surface, device, queue, config, pixel_buffer,
             pixel_texture, bind_group, bind_group_layout, render_pipeline, accum_buffer, sample_count,
             compute_pipeline: None, compute_bind_group: None, sphere_buffer: None, triangle_buffer: None,
-            plane_buffer: None, ray_buffer: None, hit_buffer: None, staging_buffer: None, counts_buffer: None }
+            plane_buffer: None, ray_buffer: None, hit_buffer: None, color_buffer: None, staging_buffer: None, counts_buffer: None, }
     }
 
     fn resize(&mut self, width: u32, height: u32) {

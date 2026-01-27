@@ -1,7 +1,4 @@
-use crate::gpu_types::{vec4_to_vec3, GpuHitInfo, GpuPlane, GpuRay, GpuSphere, GpuTriangle};
-use crate::material::Material;
-use crate::objects::HitInfo;
-use crate::ray::Ray;
+use crate::gpu_types::{GpuColor, GpuPlane, GpuRay, GpuSphere, GpuTriangle};
 use crate::scene::Scene;
 use crate::window::Canvas;
 use bytemuck::{Pod, Zeroable};
@@ -15,16 +12,17 @@ struct Counts {
     plane_count: u32,
     width: u32,
     height: u32,
-    _pad0: u32,
+    frame_number: u32,
     _pad1: u32,
     _pad2: u32,
 }
 
 pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
     let shader_source = format!(
-        "{}\n{}\n{}",
+        "{}\n{}\n{}\n{}",
         include_str!("shaders/types.wgsl"),
         include_str!("shaders/hit.wgsl"),
+        include_str!("shaders/random.wgsl"),
         include_str!("shaders/raytracer.wgsl"),
     );
 
@@ -41,7 +39,7 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
         plane_count: gpu_planes.len() as u32,
         width: canvas.width(),
         height: canvas.height(),
-        _pad0: 0,
+        frame_number: canvas.sample_count,
         _pad1: 0,
         _pad2: 0,
     };
@@ -80,16 +78,16 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
         mapped_at_creation: false,
     });
 
-    let hit_buffer = canvas.device().create_buffer(&wgpu::BufferDescriptor {
-        label: Some("Hit Buffer"),
-        size: (pixel_count * std::mem::size_of::<GpuHitInfo>()) as u64,
+    let color_buffer = canvas.device().create_buffer(&wgpu::BufferDescriptor {
+        label: Some("Color Output Buffer"),
+        size: (pixel_count * std::mem::size_of::<GpuColor>()) as u64,
         usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
         mapped_at_creation: false,
     });
 
     let staging_buffer = canvas.device().create_buffer(&wgpu::BufferDescriptor {
         label: Some("Staging Buffer"),
-        size: (pixel_count * std::mem::size_of::<GpuHitInfo>()) as u64,
+        size: (pixel_count * std::mem::size_of::<GpuColor>()) as u64,
         usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
@@ -97,7 +95,7 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
     let counts_buffer = canvas.device().create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Counts Buffer"),
         contents: bytemuck::cast_slice(&[counts]),
-        usage: wgpu::BufferUsages::UNIFORM,
+        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
 
     let bind_group_layout = canvas.device().create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -117,7 +115,7 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
                 binding: 1,
                 visibility: wgpu::ShaderStages::COMPUTE,
                 ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    ty: wgpu::BufferBindingType::Storage { read_only: false },
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
@@ -147,7 +145,7 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
                 binding: 4,
                 visibility: wgpu::ShaderStages::COMPUTE,
                 ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: false },
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
@@ -170,11 +168,11 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
         label: Some("Compute Bind Group"),
         layout: &bind_group_layout,
         entries: &[
-            wgpu::BindGroupEntry { binding: 0, resource: sphere_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 1, resource: triangle_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 2, resource: plane_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 3, resource: ray_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 4, resource: hit_buffer.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 0, resource: ray_buffer.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 1, resource: color_buffer.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 2, resource: sphere_buffer.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 3, resource: triangle_buffer.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 4, resource: plane_buffer.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 5, resource: counts_buffer.as_entire_binding() },
         ],
     });
@@ -200,7 +198,7 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
     canvas.triangle_buffer = Some(triangle_buffer);
     canvas.plane_buffer = Some(plane_buffer);
     canvas.ray_buffer = Some(ray_buffer);
-    canvas.hit_buffer = Some(hit_buffer);
+    canvas.color_buffer = Some(color_buffer);
     canvas.staging_buffer = Some(staging_buffer);
     canvas.counts_buffer = Some(counts_buffer);
 }
@@ -240,38 +238,20 @@ fn extract_scene_data(scene: &Scene) -> (Vec<GpuSphere>, Vec<GpuTriangle>, Vec<G
         });
     }
 
-    planes.push(GpuPlane {
-        center: [0.0, 0.0, 0.0, 0.0],
-        normal: [0.0, 1.0, 0.0, 0.0],
-        width: 0.0,
-        length: 0.0,
-        _pad2: [0.0, 0.0],
-        albedo: [0.0, 0.0, 0.0, 0.0],
-        emission: 0.0,
-        metallic: 0.0,
-        roughness: 0.0,
-        _pad3: 0.0,
-    });
+    if planes.is_empty() {
+        planes.push(GpuPlane {
+            center: [0.0, 0.0, 0.0, 0.0],
+            normal: [0.0, 1.0, 0.0, 0.0],
+            width: 0.0,
+            length: 0.0,
+            _pad2: [0.0, 0.0],
+            albedo: [0.0, 0.0, 0.0, 0.0],
+            emission: 0.0,
+            metallic: 0.0,
+            roughness: 0.0,
+            _pad3: 0.0,
+        });
+    }
 
     (spheres, triangles, planes)
-}
-
-pub fn convert_hit_info(gpu_hit: &GpuHitInfo, ray: &Ray) -> HitInfo {
-    HitInfo {
-        has_hit: gpu_hit.has_hit != 0,
-        t: gpu_hit.t as f64,
-        pos: vec4_to_vec3(gpu_hit.pos),
-        sent_ray: ray.clone(),
-        normal: vec4_to_vec3(gpu_hit.normal),
-        material: Material {
-            albedo: crate::color::Color::new(
-                gpu_hit.albedo[0],
-                gpu_hit.albedo[1],
-                gpu_hit.albedo[2],
-            ),
-            emission: gpu_hit.emission,
-            metallic: gpu_hit.metallic,
-            roughness: gpu_hit.roughness,
-        },
-    }
 }

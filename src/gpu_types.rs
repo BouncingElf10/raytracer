@@ -1,5 +1,4 @@
 use bytemuck::{Pod, Zeroable};
-use glam::Vec3;
 
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
@@ -68,6 +67,11 @@ pub struct GpuHitInfo {
     _pad1: f32,
 }
 
-pub fn vec4_to_vec3(v: [f32; 4]) -> Vec3 {
-    Vec3::new(v[0], v[1], v[2])
+#[repr(C)]
+#[derive(Copy, Clone, Pod, Zeroable)]
+pub struct GpuColor {
+    pub r: f32,
+    pub g: f32,
+    pub b: f32,
+    pub _pad: f32,
 }
