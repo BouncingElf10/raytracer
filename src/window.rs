@@ -13,6 +13,7 @@ pub struct Canvas {
     device: wgpu::Device,
     queue: wgpu::Queue,
     config: wgpu::SurfaceConfiguration,
+    sampler: wgpu::Sampler,
     pixel_buffer: Vec<u32>,
     pixel_texture: wgpu::Texture,
     bind_group: wgpu::BindGroup,
@@ -204,38 +205,61 @@ impl Canvas {
             });
 
         Self { width, height, window, events, glfw, surface, device, queue, config, pixel_buffer,
-            pixel_texture, bind_group, bind_group_layout, render_pipeline, accum_buffer, sample_count,
+            pixel_texture, bind_group, bind_group_layout, render_pipeline, sampler, accum_buffer, sample_count,
             compute_pipeline: None, compute_bind_group: None, sphere_buffer: None, triangle_buffer: None,
             plane_buffer: None, ray_buffer: None, hit_buffer: None, color_buffer: None, staging_buffer: None, counts_buffer: None, }
     }
 
     fn resize(&mut self, width: u32, height: u32) {
-        if width > 0 && height > 0 {
-            self.width = width;
-            self.height = height;
-            self.config.width = width;
-            self.config.height = height;
-            self.surface.configure(&self.device, &self.config);
-
-            self.pixel_buffer = vec![0u32; (width * height) as usize];
-            self.pixel_texture = self.device.create_texture(&wgpu::TextureDescriptor {
-                label: Some("Pixel Texture"),
-                size: wgpu::Extent3d {
-                    width,
-                    height,
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba8UnormSrgb,
-                usage: TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST,
-                view_formats: &[],
-            });
-
-            self.accum_buffer = vec![Color::black(); (width * height) as usize];
-            self.sample_count = 0;
+        if width == 0 || height == 0 {
+            return;
         }
+
+        self.width = width;
+        self.height = height;
+
+        self.config.width = width;
+        self.config.height = height;
+        self.surface.configure(&self.device, &self.config);
+
+        self.pixel_buffer = vec![0u32; (width * height) as usize];
+        self.accum_buffer = vec![Color::black(); (width * height) as usize];
+        self.sample_count = 0;
+
+        self.pixel_texture = self.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("Pixel Texture"),
+            size: wgpu::Extent3d {
+                width,
+                height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: TextureUsages::TEXTURE_BINDING | TextureUsages::COPY_DST,
+            view_formats: &[],
+        });
+
+        let texture_view = self.pixel_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        self.bind_group = self.device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Screen Bind Group"),
+            layout: &self.bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&texture_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&self.sampler),
+                },
+            ],
+        });
+
+        self.reset_accumulation();
+        self.compute_pipeline = None;
     }
 
     fn render(&mut self, clear_color: wgpu::Color) -> Result<(), wgpu::SurfaceError> {

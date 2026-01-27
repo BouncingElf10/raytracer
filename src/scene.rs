@@ -159,7 +159,7 @@ pub fn create_scene() -> Scene {
 
     scene.add_object(Box::new(Sphere::new(
         Vec3::new(0.0, -1.5, -1.5), 1.0,
-        Material { albedo: Color::new(0.8, 0.8, 0.9), roughness: 0.05, metallic: 1.0, emission: 0.0 },
+        Material { albedo: Color::new(0.8, 0.8, 0.9), roughness: 0.0, metallic: 1.0, emission: 0.0 },
     )));
 
     scene.add_object(Box::new(Sphere::new(
