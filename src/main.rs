@@ -55,7 +55,7 @@ async fn main() {
 
         if !canvas.is_open() {
             profiler::print_profile();
-            break;
+            std::process::exit(0);
         }
 
         profiler::profiler_stop("main");

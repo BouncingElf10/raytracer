@@ -1,0 +1,144 @@
+
+fn hit_sphere(sphere: Sphere, ray: Ray) -> HitInfo {
+    var hit: HitInfo;
+    hit.has_hit = 0u;
+    hit.t = 1e10;
+    hit._pad0 = vec2<f32>(0.0, 0.0);
+    hit._pad1 = 0.0;
+
+    let oc = ray.origin - sphere.center;
+    let a = dot(ray.direction, ray.direction);
+    let b = 2.0 * dot(oc, ray.direction);
+    let c = dot(oc, oc) - sphere.radius * sphere.radius;
+    let discriminant = b * b - 4.0 * a * c;
+
+    if (discriminant > 0.0) {
+        let sqrt_d = sqrt(discriminant);
+        var t = (-b - sqrt_d) / (2.0 * a);
+
+        if (t < 0.001) {
+            t = (-b + sqrt_d) / (2.0 * a);
+        }
+
+        if (t > 0.001) {
+            hit.has_hit = 1u;
+            hit.t = t;
+            let pos = ray.origin + ray.direction * t;
+            hit.pos = vec4<f32>(pos, 0.0);
+            let normal = normalize(pos - sphere.center);
+            hit.normal = vec4<f32>(normal, 0.0);
+            hit.albedo = vec4<f32>(sphere.albedo, 0.0);
+            hit.emission = sphere.emission;
+            hit.metallic = sphere.metallic;
+            hit.roughness = sphere.roughness;
+        }
+    }
+
+    return hit;
+}
+
+fn hit_triangle(tri: Triangle, ray: Ray) -> HitInfo {
+    var hit: HitInfo;
+    hit.has_hit = 0u;
+    hit.t = 1e10;
+    hit._pad0 = vec2<f32>(0.0, 0.0);
+    hit._pad1 = 0.0;
+
+    let eps = 1e-6;
+    let edge1 = tri.v1 - tri.v0;
+    let edge2 = tri.v2 - tri.v0;
+    let h = cross(ray.direction, edge2);
+    let a = dot(edge1, h);
+
+    if (abs(a) < eps) {
+        return hit;
+    }
+
+    let f = 1.0 / a;
+    let s = ray.origin - tri.v0;
+    let u = f * dot(s, h);
+
+    if (u < 0.0 || u > 1.0) {
+        return hit;
+    }
+
+    let q = cross(s, edge1);
+    let v = f * dot(ray.direction, q);
+
+    if (v < 0.0 || u + v > 1.0) {
+        return hit;
+    }
+
+    let t = f * dot(edge2, q);
+
+    if (t > 0.001) {
+        hit.has_hit = 1u;
+        hit.t = t;
+        let pos = ray.origin + ray.direction * t;
+        hit.pos = vec4<f32>(pos, 0.0);
+        let normal = normalize(cross(edge1, edge2));
+        hit.normal = vec4<f32>(normal, 0.0);
+        hit.albedo = vec4<f32>(tri.albedo, 0.0);
+        hit.emission = tri.emission;
+        hit.metallic = tri.metallic;
+        hit.roughness = tri.roughness;
+    }
+
+    return hit;
+}
+
+fn hit_plane(plane: Plane, ray: Ray) -> HitInfo {
+    var hit: HitInfo;
+    hit.has_hit = 0u;
+    hit.t = 1e10;
+    hit._pad0 = vec2<f32>(0.0, 0.0);
+    hit._pad1 = 0.0;
+
+    let eps = 1e-6;
+
+    let n = normalize(plane.normal.xyz);
+
+    let denom = dot(n, ray.direction);
+
+    if (abs(denom) < eps) {
+        return hit;
+    }
+
+    let t = dot(plane.center.xyz - ray.origin, n) / denom;
+
+    if (t <= 0.001) {
+        return hit;
+    }
+
+    let hit_pos = ray.origin + ray.direction * t;
+
+    var tangent: vec3<f32>;
+    if (abs(n.x) > 0.9) {
+        tangent = vec3<f32>(0.0, 1.0, 0.0);
+    } else {
+        tangent = vec3<f32>(1.0, 0.0, 0.0);
+    }
+
+    let u_vec = normalize(cross(n, tangent));
+    let v_vec = cross(n, u_vec);
+
+    let local = hit_pos - plane.center.xyz;
+    let u_dist = dot(local, u_vec);
+    let v_dist = dot(local, v_vec);
+
+    if (abs(u_dist) > plane.width * 0.5 || abs(v_dist) > plane.length * 0.5) {
+        return hit;
+    }
+
+
+    hit.has_hit = 1u;
+    hit.t = t;
+    hit.pos = vec4<f32>(hit_pos, 0.0);
+    hit.normal = vec4<f32>(n, 0.0);
+    hit.albedo = vec4<f32>(plane.albedo);
+    hit.emission = plane.emission;
+    hit.metallic = plane.metallic;
+    hit.roughness = plane.roughness;
+
+    return hit;
+}

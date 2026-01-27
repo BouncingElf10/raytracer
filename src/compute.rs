@@ -21,9 +21,16 @@ struct Counts {
 }
 
 pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
+    let shader_source = format!(
+        "{}\n{}\n{}",
+        include_str!("shaders/types.wgsl"),
+        include_str!("shaders/hit.wgsl"),
+        include_str!("shaders/raytracer.wgsl"),
+    );
+
     let shader = canvas.device().create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("Raytrace Compute Shader"),
-        source: wgpu::ShaderSource::Wgsl(include_str!("shaders/raytracer.wgsl").into()),
+        source: wgpu::ShaderSource::Wgsl(shader_source.into()),
     });
 
     let (gpu_spheres, gpu_triangles, gpu_planes) = extract_scene_data(scene);
