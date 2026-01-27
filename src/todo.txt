@@ -1,8 +1,6 @@
 TODO:
 textures
-compute shaders
 bvh
 glass material
-profiler
+emmision over 1.0
 gui?
-triangle fan calculation

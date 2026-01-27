@@ -1,6 +1,6 @@
 use crate::camera::Camera;
 use crate::color::Color;
-use crate::gpu_types::{GpuHitInfo, GpuRay};
+use crate::gpu_types::{GpuColor, GpuRay};
 use crate::objects::HitInfo;
 use crate::profiler::{profiler_start, profiler_stop};
 use crate::ray::Ray;
@@ -36,7 +36,6 @@ impl Renderer {
     }
 
     pub fn render_gpu(&self, camera: &Camera, scene: &Scene, canvas: &mut Canvas) {
-
         profiler_start("render gpu");
 
         if canvas.compute_pipeline.is_none() {
@@ -60,6 +59,12 @@ impl Renderer {
             bytemuck::cast_slice(&rays)
         );
 
+        canvas.queue().write_buffer(
+            canvas.counts_buffer.as_ref().unwrap(),
+            20,
+            bytemuck::cast_slice(&[canvas.sample_count]),
+        );
+
         let mut encoder = canvas.device().create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Compute Encoder"),
         });
@@ -80,15 +85,19 @@ impl Renderer {
         }
 
         encoder.copy_buffer_to_buffer(
-            canvas.hit_buffer.as_ref().unwrap(),
+            canvas.color_buffer.as_ref().unwrap(),
             0,
             canvas.staging_buffer.as_ref().unwrap(),
             0,
-            (canvas.pixel_count() as usize * std::mem::size_of::<GpuHitInfo>()) as u64,
+            (canvas.pixel_count() as usize * std::mem::size_of::<GpuColor>()) as u64,
         );
 
         canvas.queue().submit(std::iter::once(encoder.finish()));
-        canvas.device().poll(PollType::Wait { submission_index: None, timeout: None }).expect("GPU was NOT polled");
+        canvas.device().poll(PollType::Wait { submission_index: None, timeout: None })
+            .expect("GPU was NOT polled");
+
+        profiler_stop("render gpu");
+        profiler_start("cpu accumulation");
 
         let buffer_slice = canvas.staging_buffer.as_ref().unwrap().slice(..);
         let (tx, rx) = futures::channel::oneshot::channel();
@@ -97,68 +106,29 @@ impl Renderer {
             tx.send(result).unwrap();
         });
 
-        canvas.device().poll(PollType::Wait { submission_index: None, timeout: None }).expect("GPU was NOT polled");
+        canvas.device().poll(PollType::Wait { submission_index: None, timeout: None })
+            .expect("GPU was NOT polled");
         pollster::block_on(rx).unwrap().unwrap();
-
-        profiler_stop("render gpu");
-        profiler_start("cpu render");
 
         {
             let data = buffer_slice.get_mapped_range();
-            let gpu_hits: &[GpuHitInfo] = bytemuck::cast_slice(&data);
+            let colors: &[GpuColor] = bytemuck::cast_slice(&data);
 
             camera.for_each_pixel(|x, y| {
                 let idx = (y * canvas.width() + x) as usize;
-                let gpu_hit = &gpu_hits[idx];
-                let ray = ray::get_ray_from_screen(camera, x, y);
+                let gpu_color = &colors[idx];
+                let color = Color::new(gpu_color.r, gpu_color.g, gpu_color.b);
 
-                let sample = if gpu_hit.has_hit != 0 {
-                    let hit_info = compute::convert_hit_info(gpu_hit, &ray);
-
-                    if hit_info.material.emission > 0.0 {
-                        hit_info.material.albedo * hit_info.material.emission
-                    } else {
-                        profiler_start("ray calculations");
-
-                        let normal = hit_info.normal.normalize();
-                        let diffuse_dir = ray::random_cosine_hemisphere(normal);
-                        let diffuse_ray = Ray::new(hit_info.pos + normal * 0.001, diffuse_dir);
-
-                        let specular_dir = ray.reflect(hit_info.normal);
-                        let specular_ray = Ray::new(hit_info.pos + normal * 0.001, specular_dir.direction().normalize());
-                        let final_ray = ray::lerp(&specular_ray, &diffuse_ray, hit_info.material.roughness);
-
-                        let final_color = Color::white() * hit_info.material.albedo *
-                            (hit_info.material.metallic * specular_ray.dot() +
-                                (1.0 - hit_info.material.metallic) * diffuse_ray.dot());
-
-                        profiler_stop("ray calculations");
-
-                        profiler_start("recursive bounce");
-
-                        let color = recursive_bounce(final_ray, final_color, scene, 1);
-
-                        profiler_stop("recursive bounce");
-                        color
-                    }
-                } else {
-                    Color::black()
-                };
-
-                profiler_start("buffer write");
-
-                canvas.accum_buffer[idx] = canvas.accum_buffer[idx] + sample;
+                canvas.accum_buffer[idx] = canvas.accum_buffer[idx] + color;
                 let avg = canvas.accum_buffer[idx] / (canvas.sample_count as f32 + 1.0);
                 canvas.paint_pixel(x, y, avg.gamma_correct().to_u32());
-
-                profiler_stop("buffer write");
             });
         }
 
         canvas.staging_buffer.as_ref().unwrap().unmap();
         canvas.sample_count += 1;
 
-        profiler_stop("cpu render");
+        profiler_stop("cpu accumulation");
     }
     
     #[allow(dead_code)]

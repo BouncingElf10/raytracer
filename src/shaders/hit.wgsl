@@ -142,3 +142,35 @@ fn hit_plane(plane: Plane, ray: Ray) -> HitInfo {
 
     return hit;
 }
+
+fn trace_scene(ray: Ray) -> HitInfo {
+    var closest_hit: HitInfo;
+    closest_hit.has_hit = 0u;
+    var closest_t = 3.402823466e+38;
+
+    for (var i = 0u; i < counts.sphere_count; i++) {
+        let hit = hit_sphere(spheres[i], ray);
+        if (hit.has_hit != 0u && hit.t < closest_t) {
+            closest_t = hit.t;
+            closest_hit = hit;
+        }
+    }
+
+    for (var i = 0u; i < counts.triangle_count; i++) {
+        let hit = hit_triangle(triangles[i], ray);
+        if (hit.has_hit != 0u && hit.t < closest_t) {
+            closest_t = hit.t;
+            closest_hit = hit;
+        }
+    }
+
+    for (var i = 0u; i < counts.plane_count; i++) {
+        let hit = hit_plane(planes[i], ray);
+        if (hit.has_hit != 0u && hit.t < closest_t) {
+            closest_t = hit.t;
+            closest_hit = hit;
+        }
+    }
+
+    return closest_hit;
+}
