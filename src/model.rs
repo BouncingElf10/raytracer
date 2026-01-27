@@ -50,7 +50,11 @@ impl Face {
         if self.vertices.len() == 3 {
             return vec![Triangle::new(self.vertices[0].position, self.vertices[1].position, self.vertices[2].position, self.material)]
         }
-        vec![]
+        let mut tris = Vec::new();
+        for i in 1..(self.vertices.len() - 1) {
+            tris.push(Triangle::new(self.vertices[0].position, self.vertices[i].position, self.vertices[i + 1].position, self.material, ));
+        }
+        tris
     }
 }
 
