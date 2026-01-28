@@ -45,6 +45,7 @@ async fn main() {
                                          canvas.sample_count));
         canvas.present().unwrap();
         canvas.update();
+        camera.resize(canvas.width(), canvas.height());
         if movement::apply_movements(&mut camera, &canvas, delta_time, &mut movement_state) {
             canvas.reset_accumulation();
         }

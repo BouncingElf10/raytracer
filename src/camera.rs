@@ -18,6 +18,11 @@ impl Camera {
             }
         }
     }
+
+    pub fn resize(&mut self, width: u32, height: u32) {
+        self.width = width;
+        self.height = height;
+    }
     
     pub fn width(&self) -> u32 { self.width }
     pub fn height(&self) -> u32 { self.height }

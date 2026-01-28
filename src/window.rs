@@ -260,6 +260,11 @@ impl Canvas {
 
         self.reset_accumulation();
         self.compute_pipeline = None;
+        self.compute_bind_group = None;
+        self.ray_buffer = None;
+        self.color_buffer = None;
+        self.staging_buffer = None;
+        self.counts_buffer = None;
     }
 
     fn render(&mut self, clear_color: wgpu::Color) -> Result<(), wgpu::SurfaceError> {
