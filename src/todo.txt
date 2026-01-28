@@ -4,3 +4,4 @@ bvh
 glass material
 emmision over 1.0
 gui?
+avg normals for smooth shading

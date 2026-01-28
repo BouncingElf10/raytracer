@@ -36,15 +36,15 @@ fn trace_path(initial_ray: Ray, seed: ptr<function, u32>) -> vec3<f32> {
 
         let diffuse_dir = random_cosine_hemisphere(N, seed);
         let specular_dir = reflect(ray.direction, N);
-
         let out_dir = normalize(mix(specular_dir, diffuse_dir, hit.roughness));
-        let NdotL = max(dot(N, out_dir), 0.0);
         let diffuse_weight = (1.0 - hit.metallic) * (1.0 - fresnel);
         let specular_weight = fresnel;
-        throughput *= diffuse_weight * hit.albedo.xyz * NdotL + specular_weight;
+
+        throughput *= diffuse_weight * hit.albedo.xyz + specular_weight;
 
         ray.origin = hit.pos.xyz + N * 0.001;
         ray.direction = out_dir;
+
         if (max(throughput.x, max(throughput.y, throughput.z)) < 0.001) {
             break;
         }
