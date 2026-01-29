@@ -152,29 +152,32 @@ pub fn create_scene() -> Scene {
     )));
 
     // Spheres
-    scene.add_object(Box::new(Sphere::new(
-        Vec3::new(-1.5, -1.5, 0.0), 1.0,
-        Material { albedo: Color::new(0.7, 0.7, 0.7), roughness: 1.0, metallic: 0.0, emission: 0.0 },
-    )));
-
-    scene.add_object(Box::new(Sphere::new(
-        Vec3::new(0.0, -1.5, -1.5), 1.0,
-        Material { albedo: Color::new(0.8, 0.8, 0.9), roughness: 0.0, metallic: 1.0, emission: 0.0 },
-    )));
-
-    scene.add_object(Box::new(Sphere::new(
-        Vec3::new(1.5, -1.5, 0.0), 1.0,
-        Material { albedo: Color::new(0.9, 0.6, 0.2), roughness: 0.6, metallic: 0.0, emission: 0.0 },
-    )));
+    // scene.add_object(Box::new(Sphere::new(
+    //     Vec3::new(-1.5, -1.5, 0.0), 1.0,
+    //     Material { albedo: Color::new(0.7, 0.7, 0.7), roughness: 1.0, metallic: 0.0, emission: 0.0 },
+    // )));
+    //
+    // scene.add_object(Box::new(Sphere::new(
+    //     Vec3::new(0.0, -1.5, -1.5), 1.0,
+    //     Material { albedo: Color::new(0.8, 0.8, 0.9), roughness: 0.0, metallic: 1.0, emission: 0.0 },
+    // )));
+    //
+    // scene.add_object(Box::new(Sphere::new(
+    //     Vec3::new(1.5, -1.5, 0.0), 1.0,
+    //     Material { albedo: Color::new(0.9, 0.6, 0.2), roughness: 0.6, metallic: 0.0, emission: 0.0 },
+    // )));
 
     profiler_stop("load other models");
-    profiler_start("load teapot");
+    profiler_start("load mesh");
 
-    let mut mesh = import_obj("src/models/teapot.obj");
+    let mut mesh = import_obj("src/models/standford_dragon.obj");
     mesh.set_material(Material::new(Color::new(0.9, 0.9, 0.9), 1.0, 0.0, 0.0));
+    mesh.position = Vec3::new(0.0, -2.5, 0.0);
+    mesh.scale = 2.0;
+    mesh.rotation = Vec3::new(0.0, 20.0f32.to_radians(), 0.0);
     scene.add_object(Box::new(mesh));
 
-    profiler_stop("load teapot");
+    profiler_stop("load mesh");
     profiler_stop("create scene");
     scene
 }
