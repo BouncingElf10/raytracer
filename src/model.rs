@@ -1,4 +1,4 @@
-use glam::Vec3;
+use glam::{Quat, Vec3};
 use crate::color::Color;
 use crate::material::Material;
 use crate::objects::Triangle;
@@ -17,21 +17,39 @@ pub struct Face {
 }
 
 pub struct Mesh {
-    pub faces: Vec<Face>
+    pub faces: Vec<Face>,
+    pub position: Vec3,
+    pub rotation: Vec3,
+    pub scale: f32,
 }
 
 impl Mesh {
     pub fn new() -> Self {
-        Self { faces: Vec::new() }
+        Self { faces: Vec::new(), position: Vec3::ZERO, rotation: Vec3::ZERO, scale: 1.0 }
     }
     pub fn append_face(&mut self, face: Face) {
         self.faces.push(face);
     }
+
     pub fn get_triangles(&self) -> Vec<Triangle> {
+        let rotation =
+            Quat::from_rotation_x(self.rotation.x) *
+            Quat::from_rotation_y(self.rotation.y) *
+            Quat::from_rotation_z(self.rotation.z);
+
         self.faces
             .iter()
-            .flat_map(|face| face.to_tris())
-            .collect()
+            .flat_map(|face| {
+                face.to_tris().into_iter().map(|triangle| {
+                    let mut vertices = triangle.get_vertices();
+                    for vertex in vertices.iter_mut() {
+                        *vertex *= self.scale;
+                        *vertex = rotation * *vertex;
+                        *vertex += self.position;
+                    }
+                    Triangle::new(vertices[0], vertices[1], vertices[2], triangle.material().clone())
+                })
+            }).collect()
     }
 }
 

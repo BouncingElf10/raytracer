@@ -27,6 +27,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
+    #[allow(dead_code)]
     pub fn new(pos: Vec3, radius: f32, material: Material) -> Self {
         Self { pos, radius, material }
     }
@@ -100,6 +101,10 @@ impl Triangle {
 
     pub fn v2(&self) -> Vec3 {
         self.v2
+    }
+
+    pub fn get_vertices(&self) -> [Vec3; 3] {
+        [self.v0, self.v1, self.v2]
     }
 
     pub fn material(&self) -> &Material {
