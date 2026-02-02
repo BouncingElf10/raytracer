@@ -170,7 +170,7 @@ pub fn create_scene() -> Scene {
     profiler_stop("load other models");
     profiler_start("load mesh");
 
-    let mut mesh = import_obj("src/models/teapot.obj");
+    let mut mesh = import_obj("src/models/standford_dragon.obj");
     mesh.set_material(Material::new(Color::new(0.9, 0.9, 0.9), 1.0, 0.0, 0.0));
     mesh.position = Vec3::new(0.0, -2.5, 0.0);
     mesh.scale = 2.0;

@@ -35,8 +35,8 @@ impl Renderer {
         canvas.sample_count += 1;
     }
 
-    pub fn render_debug(&self, camera: &Camera, scene: &Scene, canvas: &mut Canvas) {
-        canvas.clear(camera);
+    pub fn render_debug(&self, camera: &Camera, scene: &Scene, canvas: &mut Canvas, should_clear: bool) {
+        if should_clear { canvas.clear(camera); }
 
         for (i, object) in scene.get_objects().iter().enumerate() {
             let aabb = object.to_aabb();
