@@ -36,7 +36,8 @@ async fn main() {
     loop {
         profiler::profiler_start("main");
 
-        renderer.render_debug(&camera, &scene, &mut canvas);
+        renderer.render_gpu(&camera, &scene, &mut canvas);
+        renderer.render_debug(&camera, &scene, &mut canvas, false);
 
         profiler::profiler_start("text and movement");
 

@@ -24,8 +24,8 @@ impl Camera {
         let forward = self.ray.direction().normalize();
 
         let world_up = if forward.y.abs() > 0.99 { Vec3::Z } else { Vec3::Y };
-        let right = forward.cross(world_up).normalize();
-        let up = right.cross(forward).normalize();
+        let right = world_up.cross(forward).normalize();
+        let up = forward.cross(right).normalize();
 
         let rel = p - self.ray.origin();
 
