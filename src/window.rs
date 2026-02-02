@@ -348,6 +348,39 @@ impl Canvas {
         }
     }
 
+    pub fn draw_line(&mut self, a: (i32, i32), b: (i32, i32), color: u32) {
+        let (mut x0, mut y0) = a;
+        let (x1, y1) = b;
+
+        let dx = (x1 - x0).abs();
+        let dy = -(y1 - y0).abs();
+
+        let sx = if x0 < x1 { 1 } else { -1 };
+        let sy = if y0 < y1 { 1 } else { -1 };
+
+        let mut err = dx + dy;
+
+        loop {
+            self.paint_pixel(x0 as u32, y0 as u32, color);
+
+            if x0 == x1 && y0 == y1 {
+                break;
+            }
+
+            let e2 = err * 2;
+
+            if e2 >= dy {
+                err += dy;
+                x0 += sx;
+            }
+
+            if e2 <= dx {
+                err += dx;
+                y0 += sy;
+            }
+        }
+    }
+
     pub fn update(&mut self) {
         self.glfw.poll_events();
         let events: Vec<_> = glfw::flush_messages(&self.events).collect();

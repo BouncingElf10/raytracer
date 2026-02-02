@@ -1,3 +1,4 @@
+use glam::Vec3;
 use crate::ray::Ray;
 
 pub struct Camera {
@@ -17,6 +18,40 @@ impl Camera {
                 f(x, y);
             }
         }
+    }
+
+    pub fn world_to_screen(&self, p: Vec3) -> Option<(i32, i32)> {
+        let forward = self.ray.direction().normalize();
+
+        let world_up = if forward.y.abs() > 0.99 { Vec3::Z } else { Vec3::Y };
+        let right = forward.cross(world_up).normalize();
+        let up = right.cross(forward).normalize();
+
+        let rel = p - self.ray.origin();
+
+        let x = rel.dot(right);
+        let y = rel.dot(up);
+        let z = rel.dot(forward);
+
+        if z <= 0.0 {
+            return None;
+        }
+
+        let fov_y = 90.0_f32.to_radians();
+        let f = 1.0 / (fov_y * 0.5).tan();
+        let aspect = self.width as f32 / self.height as f32;
+
+        let ndc_x = (x * f / aspect) / z;
+        let ndc_y = (y * f) / z;
+
+        // if ndc_x.abs() > 10.0 || ndc_y.abs() > 10.0 {
+        //     return None;
+        // }
+
+        let sx = ((ndc_x + 1.0) * 0.5 * self.width as f32) as i32;
+        let sy = ((1.0 - ndc_y) * 0.5 * self.height as f32) as i32;
+
+        Some((sx, sy))
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
