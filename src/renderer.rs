@@ -1,6 +1,8 @@
+use crate::bvh::{construct_bvh, traverse_leaf_nodes, AABB};
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::gpu_types::{GpuColor, GpuRay};
+use crate::model::Mesh;
 use crate::objects::HitInfo;
 use crate::profiler::{profiler_start, profiler_stop};
 use crate::ray::Ray;
@@ -39,6 +41,23 @@ impl Renderer {
         if should_clear { canvas.clear(camera); }
 
         for (i, object) in scene.get_objects().iter().enumerate() {
+            if let Some(mesh) = object.as_any().downcast_ref::<Mesh>() {
+                profiler_start("construct_bvh");
+                let bvh = construct_bvh(mesh);
+                profiler_stop("construct_bvh");
+                traverse_leaf_nodes(&bvh, &mut |aabb: &AABB, _objects| {
+                    for (a, b) in aabb.edges() {
+                        match (camera.world_to_screen(a), camera.world_to_screen(b)) {
+                            (Some(pa), Some(pb)) => {
+                                canvas.draw_line(pa, pb, Color::random_from_seed(i as u32).to_u32());
+                            }
+                            _ => {},
+                        }
+                    }
+                });
+                return;
+            }
+
             let aabb = object.to_aabb();
             for (a, b) in aabb.edges() {
                 match (camera.world_to_screen(a), camera.world_to_screen(b)) {
