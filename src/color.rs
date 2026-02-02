@@ -1,4 +1,6 @@
 use std::ops::{Add, AddAssign, Div, Mul, MulAssign, Sub, SubAssign};
+use rand::{Rng, SeedableRng};
+use rand::rngs::StdRng;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Color {
@@ -34,6 +36,14 @@ impl Color {
     }
     pub fn white() -> Self {
         Self::new(1.0, 1.0, 1.0)
+    }
+    pub fn random_from_seed(seed: u32) -> Self {
+        let mut rng = StdRng::from_seed([seed as u8; 32]);
+
+        let n1: f32 = rng.random_range(0.0..=1.0);
+        let n2: f32 = rng.random_range(0.0..=1.0);
+        let n3: f32 = rng.random_range(0.0..=1.0);
+        Self::new(n1, n2, n3)
     }
 }
 

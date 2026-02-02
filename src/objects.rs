@@ -1,5 +1,6 @@
 use std::any::Any;
 use glam::Vec3;
+use crate::bvh::AABB;
 use crate::material::Material;
 use crate::model::Mesh;
 use crate::ray::Ray;
@@ -8,6 +9,7 @@ pub trait Hittable {
     fn hit(&self, ray: &Ray) -> HitInfo;
     fn set_material(&mut self, material: Material);
     fn as_any(&self) -> &dyn Any;
+    fn to_aabb(&self) -> AABB;
 }
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
@@ -166,6 +168,22 @@ impl Hittable for Triangle {
     fn as_any(&self) -> &dyn Any {
         self
     }
+    fn to_aabb(&self) -> AABB {
+        let mut min = Vec3::splat(f32::MAX);
+        let mut max = Vec3::splat(f32::MIN);
+
+        for v in self.get_vertices() {
+            min.x = min.x.min(v.x);
+            min.y = min.y.min(v.y);
+            min.z = min.z.min(v.z);
+
+            max.x = max.x.max(v.x);
+            max.y = max.y.max(v.y);
+            max.z = max.z.max(v.z);
+        }
+
+        AABB::new(min, max)
+    }
 }
 
 impl Hittable for Plane {
@@ -218,6 +236,39 @@ impl Hittable for Plane {
     fn as_any(&self) -> &dyn Any {
         self
     }
+    fn to_aabb(&self) -> AABB {
+        let (u, v) = plane_basis(self.normal);
+
+        let hu = u * (self.width * 0.5);
+        let hv = v * (self.length * 0.5);
+
+        let corners = [
+            self.center + hu + hv,
+            self.center + hu - hv,
+            self.center - hu + hv,
+            self.center - hu - hv,
+        ];
+
+        let (min, max) = corners.iter().fold(
+            (Vec3::splat(f32::MAX), Vec3::splat(f32::MIN)),
+            |(min, max), p| (min.min(*p), max.max(*p)),
+        );
+
+        AABB::new(min, max)
+    }
+}
+
+fn plane_basis(normal: Vec3) -> (Vec3, Vec3) {
+    let up = if normal.abs().y < 0.999 {
+        Vec3::Y
+    } else {
+        Vec3::X
+    };
+
+    let u = normal.cross(up).normalize();
+    let v = normal.cross(u).normalize();
+
+    (u, v)
 }
 
 impl Hittable for Sphere {
@@ -260,6 +311,9 @@ impl Hittable for Sphere {
     fn as_any(&self) -> &dyn Any {
         self
     }
+    fn to_aabb(&self) -> AABB {
+        AABB::new(self.pos - self.radius, self.pos + self.radius)
+    }
 }
 
 impl Hittable for Mesh {
@@ -280,6 +334,16 @@ impl Hittable for Mesh {
     }
     fn as_any(&self) -> &dyn Any {
         self
+    }
+    fn to_aabb(&self) -> AABB {
+        let (min, max) = self.get_triangles().iter().flat_map(|tri| {
+            tri.get_vertices()
+        }).fold(
+            (Vec3::splat(f32::MAX), Vec3::splat(f32::MIN)),
+            |(min, max), p| (min.min(p), max.max(p)),
+        );
+
+        AABB::new(min, max)
     }
 }
 
