@@ -36,19 +36,21 @@ impl Renderer {
     }
 
     pub fn render_debug(&self, camera: &Camera, scene: &Scene, canvas: &mut Canvas) {
-        let mut color_index = 0;
         canvas.clear(camera);
-        scene.get_objects().iter().for_each(|object| {
-            camera.for_each_pixel(|x, y| {
-                let ray = ray::get_ray_from_screen(camera, x, y);
-                if object.to_aabb().hit(&ray) {
-                    canvas.paint_pixel(x, y, Color::random_from_seed(color_index).to_u32())
+
+        for (i, object) in scene.get_objects().iter().enumerate() {
+            let aabb = object.to_aabb();
+            for (a, b) in aabb.edges() {
+                match (camera.world_to_screen(a), camera.world_to_screen(b)) {
+                    (Some(pa), Some(pb)) => {
+                        canvas.draw_line(pa, pb, Color::random_from_seed(i as u32).to_u32());
+                    }
+                    _ => {},
                 }
-            });
-            color_index += 1;
-        });
-        canvas.sample_count += 1;
+            }
+        }
     }
+
 
     pub fn render_gpu(&self, camera: &Camera, scene: &Scene, canvas: &mut Canvas) {
         profiler_start("render gpu");
