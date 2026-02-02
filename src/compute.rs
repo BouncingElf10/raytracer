@@ -1,6 +1,9 @@
-use crate::gpu_types::{GpuColor, GpuPlane, GpuRay, GpuSphere, GpuTriangle};
+use crate::gpu_types::{GpuColor, GpuPlane, GpuRay, GpuSphere, GpuTriangle, GpuBVHNode};
 use crate::scene::Scene;
 use crate::window::Canvas;
+use crate::bvh::{construct_bvh, flatten_bvh_for_gpu};
+use crate::model::Mesh;
+use crate::objects::Hittable;
 use bytemuck::{Pod, Zeroable};
 use wgpu::util::DeviceExt;
 
@@ -10,11 +13,11 @@ struct Counts {
     sphere_count: u32,
     triangle_count: u32,
     plane_count: u32,
+    bvh_node_count: u32,
+    bvh_index_count: u32,
     width: u32,
     height: u32,
     frame_number: u32,
-    _pad1: u32,
-    _pad2: u32,
 }
 
 pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
@@ -31,23 +34,26 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
         source: wgpu::ShaderSource::Wgsl(shader_source.into()),
     });
 
-    let (gpu_spheres, gpu_triangles, gpu_planes) = extract_scene_data(scene);
+    let (gpu_spheres, mut gpu_triangles, gpu_planes) = extract_scene_data(scene);
+    let (bvh_nodes, bvh_indices) = build_scene_bvh(scene, &gpu_triangles);
 
     let counts = Counts {
         sphere_count: gpu_spheres.len() as u32,
         triangle_count: gpu_triangles.len() as u32,
         plane_count: gpu_planes.len() as u32,
+        bvh_node_count: bvh_nodes.len() as u32,
+        bvh_index_count: bvh_indices.len() as u32,
         width: canvas.width(),
         height: canvas.height(),
         frame_number: canvas.sample_count,
-        _pad1: 0,
-        _pad2: 0,
     };
 
-    println!("Creating counts buffer:");
+    println!("Creating buffers:");
     println!("  spheres: {}", counts.sphere_count);
     println!("  triangles: {}", counts.triangle_count);
     println!("  planes: {}", counts.plane_count);
+    println!("  BVH nodes: {}", counts.bvh_node_count);
+    println!("  BVH indices: {}", counts.bvh_index_count);
     println!("  width: {}", counts.width);
     println!("  height: {}", counts.height);
 
@@ -66,6 +72,18 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
     let plane_buffer = canvas.device().create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Plane Buffer"),
         contents: bytemuck::cast_slice(&gpu_planes),
+        usage: wgpu::BufferUsages::STORAGE,
+    });
+
+    let bvh_node_buffer = canvas.device().create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("BVH Node Buffer"),
+        contents: bytemuck::cast_slice(&bvh_nodes),
+        usage: wgpu::BufferUsages::STORAGE,
+    });
+
+    let bvh_index_buffer = canvas.device().create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("BVH Index Buffer"),
+        contents: bytemuck::cast_slice(&bvh_indices),
         usage: wgpu::BufferUsages::STORAGE,
     });
 
@@ -161,6 +179,26 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
                 },
                 count: None,
             },
+            wgpu::BindGroupLayoutEntry {
+                binding: 6,
+                visibility: wgpu::ShaderStages::COMPUTE,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
+            wgpu::BindGroupLayoutEntry {
+                binding: 7,
+                visibility: wgpu::ShaderStages::COMPUTE,
+                ty: wgpu::BindingType::Buffer {
+                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: None,
+                },
+                count: None,
+            },
         ],
     });
 
@@ -174,6 +212,8 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
             wgpu::BindGroupEntry { binding: 3, resource: triangle_buffer.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 4, resource: plane_buffer.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 5, resource: counts_buffer.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 6, resource: bvh_node_buffer.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 7, resource: bvh_index_buffer.as_entire_binding() },
         ],
     });
 
@@ -254,4 +294,53 @@ fn extract_scene_data(scene: &Scene) -> (Vec<GpuSphere>, Vec<GpuTriangle>, Vec<G
     }
 
     (spheres, triangles, planes)
+}
+
+fn build_scene_bvh(scene: &Scene, triangles: &[GpuTriangle]) -> (Vec<GpuBVHNode>, Vec<u32>) {
+    let mut all_nodes = Vec::new();
+    let mut all_indices = Vec::new();
+
+    use crate::objects::Triangle;
+    use crate::material::Material;
+    use crate::color::Color;
+    use glam::Vec3;
+
+    let cpu_triangles: Vec<Triangle> = triangles.iter().map(|t| {
+        Triangle::new(
+            Vec3::new(t.v0[0], t.v0[1], t.v0[2]),
+            Vec3::new(t.v1[0], t.v1[1], t.v1[2]),
+            Vec3::new(t.v2[0], t.v2[1], t.v2[2]),
+            Material::new(
+                Color::new(t.albedo[0], t.albedo[1], t.albedo[2]),
+                t.emission,
+                t.metallic,
+                t.roughness,
+            )
+        )
+    }).collect();
+
+    for object in scene.get_objects() {
+        if let Some(mesh) = object.as_any().downcast_ref::<Mesh>() {
+            let bvh = construct_bvh(mesh);
+            let (nodes, indices) = flatten_bvh_for_gpu(&bvh, &cpu_triangles);
+            all_nodes.extend(nodes);
+            all_indices.extend(indices);
+        }
+    }
+
+    if all_nodes.is_empty() {
+        all_nodes.push(GpuBVHNode {
+            min: [0.0; 3],
+            _pad0: 0.0,
+            max: [0.0; 3],
+            _pad1: 0.0,
+            left_first: 0,
+            right_count: 0,
+            is_leaf: 1,
+            _pad2: 0,
+        });
+        all_indices.push(0);
+    }
+
+    (all_nodes, all_indices)
 }

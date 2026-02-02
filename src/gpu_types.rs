@@ -75,3 +75,17 @@ pub struct GpuColor {
     pub b: f32,
     pub _pad: f32,
 }
+
+// New BVH structures for GPU
+#[repr(C)]
+#[derive(Copy, Clone, Pod, Zeroable)]
+pub struct GpuBVHNode {
+    pub min: [f32; 3],
+    pub _pad0: f32,
+    pub max: [f32; 3],
+    pub _pad1: f32,
+    pub left_first: u32,
+    pub right_count: u32,
+    pub is_leaf: u32,
+    pub _pad2: u32,
+}

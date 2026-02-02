@@ -143,6 +143,83 @@ fn hit_plane(plane: Plane, ray: Ray) -> HitInfo {
     return hit;
 }
 
+// AABB intersection test
+fn intersect_aabb(ray: Ray, aabb_min: vec3<f32>, aabb_max: vec3<f32>) -> bool {
+    let inv_dir = 1.0 / ray.direction;
+    let t0 = (aabb_min - ray.origin) * inv_dir;
+    let t1 = (aabb_max - ray.origin) * inv_dir;
+
+    let tmin = min(t0, t1);
+    let tmax = max(t0, t1);
+
+    let tmin_max = max(max(tmin.x, tmin.y), tmin.z);
+    let tmax_min = min(min(tmax.x, tmax.y), tmax.z);
+
+    return tmax_min >= max(0.0, tmin_max);
+}
+
+fn traverse_bvh(ray: Ray) -> HitInfo {
+    var closest_hit: HitInfo;
+    closest_hit.has_hit = 0u;
+    var closest_t = 3.402823466e+38;
+
+    if (counts.bvh_node_count == 0u) {
+        return closest_hit;
+    }
+
+    var stack: array<u32, 32>;
+    var stack_ptr = 0u;
+    stack[0] = 0u;
+    stack_ptr = 1u;
+
+    while (stack_ptr > 0u) {
+        stack_ptr -= 1u;
+        let node_idx = stack[stack_ptr];
+
+        if (node_idx >= counts.bvh_node_count) {
+            continue;
+        }
+
+        let node = bvh_nodes[node_idx];
+        if (!intersect_aabb(ray, node.min, node.max)) {
+            continue;
+        }
+
+        if (node.is_leaf == 1u) {
+            let first_tri = node.left_first;
+            let tri_count = node.right_count;
+
+            for (var i = 0u; i < tri_count; i++) {
+                let tri_idx = bvh_indices[first_tri + i];
+                if (tri_idx >= counts.triangle_count) {
+                    continue;
+                }
+
+                let hit = hit_triangle(triangles[tri_idx], ray);
+                if (hit.has_hit != 0u && hit.t < closest_t) {
+                    closest_t = hit.t;
+                    closest_hit = hit;
+                }
+            }
+        } else {
+            // Internal node - add children to stack
+            let left_child = node.left_first;
+            let right_child = node.right_count;
+
+            if (stack_ptr < 31u) {
+                stack[stack_ptr] = left_child;
+                stack_ptr += 1u;
+            }
+            if (stack_ptr < 31u) {
+                stack[stack_ptr] = right_child;
+                stack_ptr += 1u;
+            }
+        }
+    }
+
+    return closest_hit;
+}
+
 fn trace_scene(ray: Ray) -> HitInfo {
     var closest_hit: HitInfo;
     closest_hit.has_hit = 0u;
@@ -156,11 +233,19 @@ fn trace_scene(ray: Ray) -> HitInfo {
         }
     }
 
-    for (var i = 0u; i < counts.triangle_count; i++) {
-        let hit = hit_triangle(triangles[i], ray);
-        if (hit.has_hit != 0u && hit.t < closest_t) {
-            closest_t = hit.t;
-            closest_hit = hit;
+    if (counts.bvh_node_count > 0u) {
+        let bvh_hit = traverse_bvh(ray);
+        if (bvh_hit.has_hit != 0u && bvh_hit.t < closest_t) {
+            closest_t = bvh_hit.t;
+            closest_hit = bvh_hit;
+        }
+    } else {
+        for (var i = 0u; i < counts.triangle_count; i++) {
+            let hit = hit_triangle(triangles[i], ray);
+            if (hit.has_hit != 0u && hit.t < closest_t) {
+                closest_t = hit.t;
+                closest_hit = hit;
+            }
         }
     }
 

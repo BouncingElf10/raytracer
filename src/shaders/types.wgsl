@@ -52,9 +52,25 @@ struct Counts {
     sphere_count: u32,
     triangle_count: u32,
     plane_count: u32,
+    bvh_node_count: u32,
+    bvh_index_count: u32,
     width: u32,
     height: u32,
     frame_number: u32,
-    _pad1: u32,
+}
+
+struct BVHNode {
+    min: vec3<f32>,
+    _pad0: f32,
+    max: vec3<f32>,
+    _pad1: f32,
+    left_first: u32,
+    right_count: u32,
+    is_leaf: u32,
     _pad2: u32,
+}
+
+struct AABB {
+    min: vec3<f32>,
+    max: vec3<f32>,
 }
