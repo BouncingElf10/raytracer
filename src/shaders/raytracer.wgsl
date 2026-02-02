@@ -4,6 +4,8 @@
 @group(0) @binding(3) var<storage, read> triangles: array<Triangle>;
 @group(0) @binding(4) var<storage, read> planes: array<Plane>;
 @group(0) @binding(5) var<uniform> counts: Counts;
+@group(0) @binding(6) var<storage, read> bvh_nodes: array<BVHNode>;
+@group(0) @binding(7) var<storage, read> bvh_indices: array<u32>;
 
 const MAX_BOUNCES: u32 = 10u;
 const PI: f32 = 3.14159265359;

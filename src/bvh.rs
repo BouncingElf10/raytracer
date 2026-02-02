@@ -2,6 +2,7 @@ use crate::model::Mesh;
 use crate::objects::{Hittable, Triangle};
 use glam::Vec3;
 use std::sync::Arc;
+use crate::gpu_types::GpuBVHNode;
 use crate::profiler::profiler_start;
 
 pub struct AABB {
@@ -60,7 +61,7 @@ pub fn construct_bvh(mesh: &Mesh) -> BVHNode {
     let prims = mesh.get_triangles();
     let aabb = mesh.to_aabb();
 
-    if prims.len() <= 500 {
+    if prims.len() <= 20 {
         return BVHNode::LeafNode {
             aabb,
             objects: Arc::new(mesh.clone()),
@@ -117,4 +118,87 @@ pub fn traverse_leaf_nodes<F>(node: &BVHNode, f: &mut F) where F: FnMut(&AABB, &
     }
 }
 
+fn vec3_to_hashable(v: Vec3) -> (u32, u32, u32) {
+    (v.x.to_bits(), v.y.to_bits(), v.z.to_bits())
+}
 
+pub fn flatten_bvh_for_gpu(bvh: &BVHNode, triangles: &[Triangle]) -> (Vec<GpuBVHNode>, Vec<u32>) {
+    let mut nodes = Vec::new();
+    let mut triangle_indices = Vec::new();
+
+    let mut tri_to_idx = std::collections::HashMap::new();
+    for (idx, tri) in triangles.iter().enumerate() {
+        let key = (
+            vec3_to_hashable(tri.v0()),
+            vec3_to_hashable(tri.v1()),
+            vec3_to_hashable(tri.v2())
+        );
+        tri_to_idx.insert(key, idx);
+    }
+
+    flatten_node(bvh, &mut nodes, &mut triangle_indices, &tri_to_idx);
+
+    (nodes, triangle_indices)
+}
+fn flatten_node(node: &BVHNode, nodes: &mut Vec<GpuBVHNode>, triangle_indices: &mut Vec<u32>,
+                tri_to_idx: &std::collections::HashMap<((u32, u32, u32), (u32, u32, u32), (u32, u32, u32)), usize>) -> u32 {
+    let node_index = nodes.len() as u32;
+    nodes.push(GpuBVHNode {
+        min: [0.0; 3],
+        _pad0: 0.0,
+        max: [0.0; 3],
+        _pad1: 0.0,
+        left_first: 0,
+        right_count: 0,
+        is_leaf: 0,
+        _pad2: 0,
+    });
+
+    match node {
+        BVHNode::LeafNode { aabb, objects } => {
+            let first_tri = triangle_indices.len() as u32;
+            let triangles = objects.get_triangles();
+
+            for tri in &triangles {
+                let key = (
+                    vec3_to_hashable(tri.v0()),
+                    vec3_to_hashable(tri.v1()),
+                    vec3_to_hashable(tri.v2())
+                );
+                if let Some(&idx) = tri_to_idx.get(&key) {
+                    triangle_indices.push(idx as u32);
+                }
+            }
+
+            let tri_count = (triangle_indices.len() as u32) - first_tri;
+
+            nodes[node_index as usize] = GpuBVHNode {
+                min: [aabb.min.x, aabb.min.y, aabb.min.z],
+                _pad0: 0.0,
+                max: [aabb.max.x, aabb.max.y, aabb.max.z],
+                _pad1: 0.0,
+                left_first: first_tri,
+                right_count: tri_count,
+                is_leaf: 1,
+                _pad2: 0,
+            };
+        }
+        BVHNode::BVHNode { aabb, left, right } => {
+            let left_index = flatten_node(left, nodes, triangle_indices, tri_to_idx);
+            let right_index = flatten_node(right, nodes, triangle_indices, tri_to_idx);
+
+            nodes[node_index as usize] = GpuBVHNode {
+                min: [aabb.min.x, aabb.min.y, aabb.min.z],
+                _pad0: 0.0,
+                max: [aabb.max.x, aabb.max.y, aabb.max.z],
+                _pad1: 0.0,
+                left_first: left_index,
+                right_count: right_index,
+                is_leaf: 0,
+                _pad2: 0,
+            };
+        }
+    }
+
+    node_index
+}
