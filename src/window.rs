@@ -1,6 +1,7 @@
 use crate::color::Color;
 use glfw::{fail_on_errors, Action, Context, CursorMode, Glfw, GlfwReceiver, Key, PWindow, WindowEvent};
 use wgpu::TextureUsages;
+use crate::camera::Camera;
 
 #[allow(dead_code)]
 pub struct Canvas {
@@ -357,6 +358,12 @@ impl Canvas {
 
     pub fn present(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.render(wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a: 1.0, })
+    }
+
+    pub fn clear(&mut self, camera: &Camera) {
+        camera.for_each_pixel(|x, y| {
+            self.paint_pixel(x, y, 0);
+        })
     }
 
     pub fn reset_accumulation(&mut self) {
