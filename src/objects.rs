@@ -109,6 +109,10 @@ impl Triangle {
         [self.v0, self.v1, self.v2]
     }
 
+    pub fn center(&self) -> Vec3 {
+        (self.v0 + self.v1 + self.v2) / 3.0
+    }
+
     pub fn material(&self) -> &Material {
         &self.material
     }

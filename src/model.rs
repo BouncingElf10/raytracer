@@ -15,7 +15,7 @@ pub struct Face {
     pub(crate) vertices: Vec<Vertex>,
     pub(crate) material: Material
 }
-
+#[derive(Debug, Clone)]
 pub struct Mesh {
     pub faces: Vec<Face>,
     pub position: Vec3,
@@ -29,6 +29,13 @@ impl Mesh {
     }
     pub fn append_face(&mut self, face: Face) {
         self.faces.push(face);
+    }
+    pub fn append_tri(&mut self, triangle: Triangle) {
+        let mut face = Face::new();
+        face.append_vertex(Vertex::new(triangle.v0(), Vec3::ZERO));
+        face.append_vertex(Vertex::new(triangle.v1(), Vec3::ZERO));
+        face.append_vertex(Vertex::new(triangle.v2(), Vec3::ZERO));
+        self.append_face(face);
     }
 
     pub fn get_triangles(&self) -> Vec<Triangle> {
