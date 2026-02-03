@@ -76,7 +76,6 @@ pub struct GpuColor {
     pub _pad: f32,
 }
 
-// New BVH structures for GPU
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct GpuBVHNode {
