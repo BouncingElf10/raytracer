@@ -320,7 +320,7 @@ fn build_scene_bvh(scene: &Scene, triangles: &[GpuTriangle]) -> (Vec<GpuBVHNode>
 
     for object in scene.get_objects() {
         if let Some(mesh) = object.as_any().downcast_ref::<Mesh>() {
-            let bvh = construct_bvh(mesh);
+            let bvh = mesh.bvh.as_ref().unwrap();
             let (nodes, indices) = flatten_bvh_for_gpu(&bvh, &cpu_triangles);
             all_nodes.extend(nodes);
             all_indices.extend(indices);

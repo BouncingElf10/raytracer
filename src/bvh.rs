@@ -4,6 +4,7 @@ use crate::objects::{Hittable, Triangle};
 use glam::Vec3;
 use std::sync::Arc;
 
+#[derive(Debug, Clone)]
 pub struct AABB {
     pub(crate) min: Vec3,
     pub(crate) max: Vec3,
@@ -44,6 +45,7 @@ pub enum Axis {
     X, Y, Z
 }
 
+#[derive(Debug, Clone)]
 pub enum BVHNode {
     BVHNode {
         aabb: AABB,
