@@ -172,7 +172,7 @@ pub fn create_scene() -> Scene {
 
     let mut mesh = import_obj("src/models/standford_dragon.obj");
     mesh.set_material(Material::new(Color::new(0.9, 0.9, 0.9), 1.0, 0.0, 0.0));
-    mesh.position = Vec3::new(0.0, -2.5, 0.0);
+    mesh.position = Vec3::new(0.0, -2.49, 0.0);
     mesh.scale = 2.0;
     mesh.rotation = Vec3::new(0.0, 20.0f32.to_radians(), 0.0);
     scene.add_object(Box::new(mesh));

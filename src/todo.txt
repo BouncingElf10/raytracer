@@ -1,6 +1,5 @@
 TODO:
 textures
-bvh
 glass material
 emmision over 1.0
 gui?
