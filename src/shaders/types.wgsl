@@ -52,11 +52,11 @@ struct Counts {
     sphere_count: u32,
     triangle_count: u32,
     plane_count: u32,
-    bvh_node_count: u32,
-    bvh_index_count: u32,
     width: u32,
     height: u32,
     frame_number: u32,
+    bvh_node_count: u32,
+    bvh_index_count: u32,
 }
 
 struct BVHNode {

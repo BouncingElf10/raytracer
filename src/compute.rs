@@ -13,11 +13,11 @@ struct Counts {
     sphere_count: u32,
     triangle_count: u32,
     plane_count: u32,
-    bvh_node_count: u32,
-    bvh_index_count: u32,
     width: u32,
     height: u32,
     frame_number: u32,
+    bvh_node_count: u32,
+    bvh_index_count: u32,
 }
 
 pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
@@ -34,28 +34,30 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
         source: wgpu::ShaderSource::Wgsl(shader_source.into()),
     });
 
-    let (gpu_spheres, mut gpu_triangles, gpu_planes) = extract_scene_data(scene);
+    let (gpu_spheres, gpu_triangles, gpu_planes) = extract_scene_data(scene);
+
+    // Build BVH for meshes
     let (bvh_nodes, bvh_indices) = build_scene_bvh(scene, &gpu_triangles);
 
     let counts = Counts {
         sphere_count: gpu_spheres.len() as u32,
         triangle_count: gpu_triangles.len() as u32,
         plane_count: gpu_planes.len() as u32,
-        bvh_node_count: bvh_nodes.len() as u32,
-        bvh_index_count: bvh_indices.len() as u32,
         width: canvas.width(),
         height: canvas.height(),
         frame_number: canvas.sample_count,
+        bvh_node_count: bvh_nodes.len() as u32,
+        bvh_index_count: bvh_indices.len() as u32,
     };
 
-    println!("Creating buffers:");
+    println!("Creating counts buffer:");
     println!("  spheres: {}", counts.sphere_count);
     println!("  triangles: {}", counts.triangle_count);
     println!("  planes: {}", counts.plane_count);
-    println!("  BVH nodes: {}", counts.bvh_node_count);
-    println!("  BVH indices: {}", counts.bvh_index_count);
     println!("  width: {}", counts.width);
     println!("  height: {}", counts.height);
+    println!("  BVH nodes: {}", counts.bvh_node_count);
+    println!("  BVH indices: {}", counts.bvh_index_count);
 
     let sphere_buffer = canvas.device().create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("Sphere Buffer"),
@@ -75,6 +77,7 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
         usage: wgpu::BufferUsages::STORAGE,
     });
 
+    // Create BVH buffers
     let bvh_node_buffer = canvas.device().create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("BVH Node Buffer"),
         contents: bytemuck::cast_slice(&bvh_nodes),
@@ -297,14 +300,12 @@ fn extract_scene_data(scene: &Scene) -> (Vec<GpuSphere>, Vec<GpuTriangle>, Vec<G
 }
 
 fn build_scene_bvh(scene: &Scene, triangles: &[GpuTriangle]) -> (Vec<GpuBVHNode>, Vec<u32>) {
-    let mut all_nodes = Vec::new();
-    let mut all_indices = Vec::new();
-
     use crate::objects::Triangle;
     use crate::material::Material;
     use crate::color::Color;
     use glam::Vec3;
 
+    // Convert GpuTriangles back to Triangle objects for BVH construction
     let cpu_triangles: Vec<Triangle> = triangles.iter().map(|t| {
         Triangle::new(
             Vec3::new(t.v0[0], t.v0[1], t.v0[2]),
@@ -319,6 +320,10 @@ fn build_scene_bvh(scene: &Scene, triangles: &[GpuTriangle]) -> (Vec<GpuBVHNode>
         )
     }).collect();
 
+    let mut all_nodes = Vec::new();
+    let mut all_indices = Vec::new();
+
+    // Find meshes in the scene and build BVH for each
     for object in scene.get_objects() {
         if let Some(mesh) = object.as_any().downcast_ref::<Mesh>() {
             let bvh = construct_bvh(mesh);
@@ -328,6 +333,7 @@ fn build_scene_bvh(scene: &Scene, triangles: &[GpuTriangle]) -> (Vec<GpuBVHNode>
         }
     }
 
+    // If no BVH was built (no meshes), create dummy data
     if all_nodes.is_empty() {
         all_nodes.push(GpuBVHNode {
             min: [0.0; 3],

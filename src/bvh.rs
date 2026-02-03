@@ -1,9 +1,8 @@
+use crate::gpu_types::GpuBVHNode;
 use crate::model::Mesh;
 use crate::objects::{Hittable, Triangle};
 use glam::Vec3;
 use std::sync::Arc;
-use crate::gpu_types::GpuBVHNode;
-use crate::profiler::profiler_start;
 
 pub struct AABB {
     pub(crate) min: Vec3,
@@ -61,7 +60,7 @@ pub fn construct_bvh(mesh: &Mesh) -> BVHNode {
     let prims = mesh.get_triangles();
     let aabb = mesh.to_aabb();
 
-    if prims.len() <= 20 {
+    if prims.len() <= 4 {
         return BVHNode::LeafNode {
             aabb,
             objects: Arc::new(mesh.clone()),
