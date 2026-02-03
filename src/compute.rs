@@ -3,7 +3,6 @@ use crate::scene::Scene;
 use crate::window::Canvas;
 use crate::bvh::{construct_bvh, flatten_bvh_for_gpu};
 use crate::model::Mesh;
-use crate::objects::Hittable;
 use bytemuck::{Pod, Zeroable};
 use wgpu::util::DeviceExt;
 
@@ -35,8 +34,6 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
     });
 
     let (gpu_spheres, gpu_triangles, gpu_planes) = extract_scene_data(scene);
-
-    // Build BVH for meshes
     let (bvh_nodes, bvh_indices) = build_scene_bvh(scene, &gpu_triangles);
 
     let counts = Counts {
@@ -77,7 +74,6 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
         usage: wgpu::BufferUsages::STORAGE,
     });
 
-    // Create BVH buffers
     let bvh_node_buffer = canvas.device().create_buffer_init(&wgpu::util::BufferInitDescriptor {
         label: Some("BVH Node Buffer"),
         contents: bytemuck::cast_slice(&bvh_nodes),
@@ -305,7 +301,6 @@ fn build_scene_bvh(scene: &Scene, triangles: &[GpuTriangle]) -> (Vec<GpuBVHNode>
     use crate::color::Color;
     use glam::Vec3;
 
-    // Convert GpuTriangles back to Triangle objects for BVH construction
     let cpu_triangles: Vec<Triangle> = triangles.iter().map(|t| {
         Triangle::new(
             Vec3::new(t.v0[0], t.v0[1], t.v0[2]),
@@ -323,7 +318,6 @@ fn build_scene_bvh(scene: &Scene, triangles: &[GpuTriangle]) -> (Vec<GpuBVHNode>
     let mut all_nodes = Vec::new();
     let mut all_indices = Vec::new();
 
-    // Find meshes in the scene and build BVH for each
     for object in scene.get_objects() {
         if let Some(mesh) = object.as_any().downcast_ref::<Mesh>() {
             let bvh = construct_bvh(mesh);
@@ -333,7 +327,6 @@ fn build_scene_bvh(scene: &Scene, triangles: &[GpuTriangle]) -> (Vec<GpuBVHNode>
         }
     }
 
-    // If no BVH was built (no meshes), create dummy data
     if all_nodes.is_empty() {
         all_nodes.push(GpuBVHNode {
             min: [0.0; 3],
