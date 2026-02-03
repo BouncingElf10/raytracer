@@ -143,8 +143,8 @@ fn hit_plane(plane: Plane, ray: Ray) -> HitInfo {
     return hit;
 }
 
-// AABB intersection test
-fn intersect_aabb(ray: Ray, aabb_min: vec3<f32>, aabb_max: vec3<f32>) -> bool {
+// AABB intersection test - returns distance to hit
+fn intersect_aabb(ray: Ray, aabb_min: vec3<f32>, aabb_max: vec3<f32>) -> f32 {
     let inv_dir = 1.0 / ray.direction;
     let t0 = (aabb_min - ray.origin) * inv_dir;
     let t1 = (aabb_max - ray.origin) * inv_dir;
@@ -155,42 +155,73 @@ fn intersect_aabb(ray: Ray, aabb_min: vec3<f32>, aabb_max: vec3<f32>) -> bool {
     let tmin_max = max(max(tmin.x, tmin.y), tmin.z);
     let tmax_min = min(min(tmax.x, tmax.y), tmax.z);
 
-    return tmax_min >= max(0.0, tmin_max);
+    if (tmax_min >= max(0.001, tmin_max)) {
+        return tmin_max;
+    }
+    return -1.0;
 }
 
+// Simplified BVH traversal with better safety checks
 fn traverse_bvh(ray: Ray) -> HitInfo {
     var closest_hit: HitInfo;
     closest_hit.has_hit = 0u;
     var closest_t = 3.402823466e+38;
 
+    // Early exit if no BVH
     if (counts.bvh_node_count == 0u) {
         return closest_hit;
     }
 
-    var stack: array<u32, 32>;
-    var stack_ptr = 0u;
-    stack[0] = 0u;
-    stack_ptr = 1u;
+    // Stack for iterative traversal - smaller stack, better safety
+    var stack: array<u32, 24>;
+    var stack_ptr = 0;
 
-    while (stack_ptr > 0u) {
-        stack_ptr -= 1u;
+    // Start with root
+    stack[0] = 0u;
+    stack_ptr = 1;
+
+    // Safety counter to prevent infinite loops
+    var iterations = 0u;
+    let max_iterations = 1000u;
+
+    while (stack_ptr > 0 && iterations < max_iterations) {
+        iterations += 1u;
+        stack_ptr -= 1;
+
         let node_idx = stack[stack_ptr];
 
+        // Bounds check
         if (node_idx >= counts.bvh_node_count) {
             continue;
         }
 
         let node = bvh_nodes[node_idx];
-        if (!intersect_aabb(ray, node.min, node.max)) {
+
+        // Test AABB intersection
+        let aabb_t = intersect_aabb(ray, node.min, node.max);
+        if (aabb_t < 0.0 || aabb_t > closest_t) {
             continue;
         }
 
         if (node.is_leaf == 1u) {
+            // Leaf node - test triangles
             let first_tri = node.left_first;
             let tri_count = node.right_count;
 
-            for (var i = 0u; i < tri_count; i++) {
-                let tri_idx = bvh_indices[first_tri + i];
+            // Safety: limit triangle tests
+            let safe_tri_count = min(tri_count, 100u);
+
+            for (var i = 0u; i < safe_tri_count; i++) {
+                let idx_offset = first_tri + i;
+
+                // Bounds check on indices array
+                if (idx_offset >= counts.bvh_index_count) {
+                    break;
+                }
+
+                let tri_idx = bvh_indices[idx_offset];
+
+                // Bounds check on triangles array
                 if (tri_idx >= counts.triangle_count) {
                     continue;
                 }
@@ -206,13 +237,18 @@ fn traverse_bvh(ray: Ray) -> HitInfo {
             let left_child = node.left_first;
             let right_child = node.right_count;
 
-            if (stack_ptr < 31u) {
-                stack[stack_ptr] = left_child;
-                stack_ptr += 1u;
+            // Only add valid children if stack has space
+            if (stack_ptr < 22) {
+                if (right_child < counts.bvh_node_count) {
+                    stack[stack_ptr] = right_child;
+                    stack_ptr += 1;
+                }
             }
-            if (stack_ptr < 31u) {
-                stack[stack_ptr] = right_child;
-                stack_ptr += 1u;
+            if (stack_ptr < 22) {
+                if (left_child < counts.bvh_node_count) {
+                    stack[stack_ptr] = left_child;
+                    stack_ptr += 1;
+                }
             }
         }
     }
@@ -225,6 +261,7 @@ fn trace_scene(ray: Ray) -> HitInfo {
     closest_hit.has_hit = 0u;
     var closest_t = 3.402823466e+38;
 
+    // Test spheres
     for (var i = 0u; i < counts.sphere_count; i++) {
         let hit = hit_sphere(spheres[i], ray);
         if (hit.has_hit != 0u && hit.t < closest_t) {
@@ -233,13 +270,15 @@ fn trace_scene(ray: Ray) -> HitInfo {
         }
     }
 
-    if (counts.bvh_node_count > 0u) {
+    // Use BVH for triangles if available
+    if (counts.bvh_node_count > 1u) {
         let bvh_hit = traverse_bvh(ray);
         if (bvh_hit.has_hit != 0u && bvh_hit.t < closest_t) {
             closest_t = bvh_hit.t;
             closest_hit = bvh_hit;
         }
     } else {
+        // Fallback: test all triangles directly
         for (var i = 0u; i < counts.triangle_count; i++) {
             let hit = hit_triangle(triangles[i], ray);
             if (hit.has_hit != 0u && hit.t < closest_t) {
@@ -249,6 +288,7 @@ fn trace_scene(ray: Ray) -> HitInfo {
         }
     }
 
+    // Test planes
     for (var i = 0u; i < counts.plane_count; i++) {
         let hit = hit_plane(planes[i], ray);
         if (hit.has_hit != 0u && hit.t < closest_t) {

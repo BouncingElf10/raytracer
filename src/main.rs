@@ -19,6 +19,8 @@ mod compute;
 mod profiler;
 mod bvh;
 
+const DEBUG_MODE: bool = false;
+
 #[tokio::main]
 async fn main() {
     profiler::profiler_start("init");
@@ -36,8 +38,19 @@ async fn main() {
     loop {
         profiler::profiler_start("main");
 
+        profiler::profiler_start("render");
+        profiler::profiler_start("gpu");
+
         renderer.render_gpu(&camera, &scene, &mut canvas);
-        renderer.render_debug(&camera, &scene, &mut canvas, false);
+
+        profiler::profiler_stop("gpu");
+        profiler::profiler_start("debug");
+
+        if DEBUG_MODE {
+            renderer.render_debug(&camera, &scene, &mut canvas, false);
+        }
+        profiler::profiler_stop("debug");
+        profiler::profiler_stop("render");
 
         profiler::profiler_start("text and movement");
 
