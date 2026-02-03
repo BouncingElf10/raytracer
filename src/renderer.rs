@@ -42,9 +42,7 @@ impl Renderer {
 
         for (i, object) in scene.get_objects().iter().enumerate() {
             if let Some(mesh) = object.as_any().downcast_ref::<Mesh>() {
-                profiler_start("construct_bvh");
-                let bvh = construct_bvh(mesh);
-                profiler_stop("construct_bvh");
+                let bvh = mesh.bvh.as_ref().unwrap();
                 traverse_leaf_nodes(&bvh, &mut |aabb: &AABB, _objects| {
                     for (a, b) in aabb.edges() {
                         match (camera.world_to_screen(a), camera.world_to_screen(b)) {

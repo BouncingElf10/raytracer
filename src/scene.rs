@@ -3,6 +3,7 @@ use crate::importer::import_obj;
 use crate::material::Material;
 use crate::objects::{Hittable, Plane, Sphere, Triangle};
 use glam::Vec3;
+use crate::bvh::construct_bvh;
 use crate::gpu_types::{GpuPlane, GpuSphere, GpuTriangle};
 use crate::model::Mesh;
 use crate::profiler::{profiler_start, profiler_stop};
@@ -175,6 +176,9 @@ pub fn create_scene() -> Scene {
     mesh.position = Vec3::new(0.0, -2.49, 0.0);
     mesh.scale = 2.0;
     mesh.rotation = Vec3::new(0.0, 20.0f32.to_radians(), 0.0);
+    profiler_start("construct_bvh");
+    mesh.add_bvh(construct_bvh(&mesh));
+    profiler_stop("construct_bvh");
     scene.add_object(Box::new(mesh));
 
     profiler_stop("load mesh");

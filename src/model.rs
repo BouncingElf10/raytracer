@@ -1,4 +1,5 @@
 use glam::{Quat, Vec3};
+use crate::bvh::BVHNode;
 use crate::color::Color;
 use crate::material::Material;
 use crate::objects::Triangle;
@@ -18,6 +19,7 @@ pub struct Face {
 #[derive(Debug, Clone)]
 pub struct Mesh {
     pub faces: Vec<Face>,
+    pub bvh: Option<BVHNode>,
     pub position: Vec3,
     pub rotation: Vec3,
     pub scale: f32,
@@ -25,7 +27,10 @@ pub struct Mesh {
 
 impl Mesh {
     pub fn new() -> Self {
-        Self { faces: Vec::new(), position: Vec3::ZERO, rotation: Vec3::ZERO, scale: 1.0 }
+        Self { faces: Vec::new(), bvh: None, position: Vec3::ZERO, rotation: Vec3::ZERO, scale: 1.0 }
+    }
+    pub fn add_bvh(&mut self, bvh: BVHNode) {
+        self.bvh = Some(bvh);
     }
     pub fn append_face(&mut self, face: Face) {
         self.faces.push(face);
