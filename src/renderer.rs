@@ -1,7 +1,7 @@
-use crate::bvh::{construct_bvh, traverse_leaf_nodes, AABB};
+use crate::bvh::{traverse_leaf_nodes, AABB};
 use crate::camera::Camera;
 use crate::color::Color;
-use crate::gpu_types::{GpuColor, GpuRay};
+use crate::gpu_types::GpuColor;
 use crate::model::Mesh;
 use crate::objects::HitInfo;
 use crate::profiler::{profiler_start, profiler_stop};
@@ -79,12 +79,7 @@ impl Renderer {
         let mut rays = Vec::with_capacity((canvas.width() * canvas.height()) as usize);
         camera.for_each_pixel(|x, y| {
             let ray = ray::get_ray_from_screen(camera, x, y);
-            rays.push(GpuRay {
-                origin: [ray.origin().x, ray.origin().y, ray.origin().z],
-                _pad0: 0.0,
-                direction: [ray.direction().x, ray.direction().y, ray.direction().z],
-                _pad1: 0.0,
-            });
+            rays.push(ray.to_gpu_ray());
         });
 
         canvas.queue().write_buffer(
@@ -123,7 +118,7 @@ impl Renderer {
             0,
             canvas.staging_buffer.as_ref().unwrap(),
             0,
-            (canvas.pixel_count() as usize * std::mem::size_of::<GpuColor>()) as u64,
+            (canvas.pixel_count() as usize * size_of::<GpuColor>()) as u64,
         );
 
         canvas.queue().submit(std::iter::once(encoder.finish()));

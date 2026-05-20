@@ -1,8 +1,8 @@
-use crate::gpu_types::{GpuColor, GpuPlane, GpuRay, GpuSphere, GpuTriangle, GpuBVHNode};
+use crate::bvh::flatten_bvh_for_gpu;
+use crate::gpu_types::{GpuBVHNode, GpuColor, GpuPlane, GpuRay, GpuSphere, GpuTriangle};
+use crate::model::Mesh;
 use crate::scene::Scene;
 use crate::window::Canvas;
-use crate::bvh::{construct_bvh, flatten_bvh_for_gpu};
-use crate::model::Mesh;
 use bytemuck::{Pod, Zeroable};
 use wgpu::util::DeviceExt;
 

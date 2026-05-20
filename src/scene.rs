@@ -153,20 +153,18 @@ pub fn create_scene() -> Scene {
     )));
 
     // Spheres
-    // scene.add_object(Box::new(Sphere::new(
-    //     Vec3::new(-1.5, -1.5, 0.0), 1.0,
-    //     Material { albedo: Color::new(0.7, 0.7, 0.7), roughness: 1.0, metallic: 0.0, emission: 0.0 },
-    // )));
-    //
-    // scene.add_object(Box::new(Sphere::new(
-    //     Vec3::new(0.0, -1.5, -1.5), 1.0,
-    //     Material { albedo: Color::new(0.8, 0.8, 0.9), roughness: 0.0, metallic: 1.0, emission: 0.0 },
-    // )));
-    //
-    // scene.add_object(Box::new(Sphere::new(
-    //     Vec3::new(1.5, -1.5, 0.0), 1.0,
-    //     Material { albedo: Color::new(0.9, 0.6, 0.2), roughness: 0.6, metallic: 0.0, emission: 0.0 },
-    // )));
+    scene.add_object(Box::new(Sphere::new(
+        Vec3::new(-1.0, -2.25, 1.5), 0.25,
+        Material { albedo: Color::new(0.8, 0.8, 0.9), roughness: 0.0, metallic: 1.0, emission: 0.0 },
+    )));
+    scene.add_object(Box::new(Sphere::new(
+        Vec3::new(0.0, -2.25, 1.5), 0.25,
+        Material { albedo: Color::new(0.8, 0.3, 0.9), roughness: 0.6, metallic: 0.6, emission: 0.0 },
+    )));
+    scene.add_object(Box::new(Sphere::new(
+        Vec3::new(1.0, -2.25, 1.5), 0.25,
+        Material { albedo: Color::new(0.2, 0.9, 0.9), roughness: 1.0, metallic: 0.2, emission: 0.0 },
+    )));
 
     profiler_stop("load other models");
     profiler_start("load mesh");
@@ -183,5 +181,30 @@ pub fn create_scene() -> Scene {
 
     profiler_stop("load mesh");
     profiler_stop("create scene");
+    scene
+}
+
+#[allow(dead_code)]
+pub fn create_scene_quay() -> Scene {
+    let mut scene = Scene::new();
+    scene.add_object(Box::new(Plane::new(
+        Vec3::new(0.0, 10.499, 0.0), Vec3::new(0.0, -1.0, 0.0),
+        40.0, 5.0,
+        Material { albedo: Color::new(1.0, 1.0, 1.0), roughness: 0.0, metallic: 0.0, emission: 1.0 },
+    )));
+    scene.add_object(Box::new(Plane::new(
+        Vec3::new(0.0, 6.2, 0.0), Vec3::new(0.0, -1.0, 0.0),
+        40.0, 5.0,
+        Material { albedo: Color::new(1.0, 1.0, 1.0), roughness: 0.0, metallic: 0.0, emission: 1.0 },
+    )));
+
+    let mut mesh = import_obj("src/models/train.obj");
+    mesh.set_material(Material::new(Color::new(0.9, 0.9, 0.9), 0.7, 1.0, 0.0));
+    mesh.position = Vec3::new(0.0, -2.49, 0.0);
+    mesh.scale = 1.0;
+    mesh.rotation = Vec3::new(0.0, 1.0f32.to_radians(), 0.0);
+    mesh.add_bvh(construct_bvh(&mesh));
+    scene.add_object(Box::new(mesh));
+
     scene
 }
