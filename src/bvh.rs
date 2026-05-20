@@ -62,7 +62,7 @@ pub fn construct_bvh(mesh: &Mesh) -> BVHNode {
     let prims = mesh.get_triangles();
     let aabb = mesh.to_aabb();
 
-    if prims.len() <= 4 {
+    if prims.len() <= 20 {
         return BVHNode::LeafNode {
             aabb,
             objects: Arc::new(mesh.clone()),

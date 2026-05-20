@@ -1,6 +1,7 @@
 use crate::camera::Camera;
 use glam::Vec3;
 use rand::random;
+use crate::gpu_types::GpuRay;
 
 #[derive(Clone, Debug, Copy)]
 pub struct Ray {
@@ -43,6 +44,15 @@ impl Ray {
         let y = self.direction[1];
         self.direction[0] = x * cos_a - y * sin_a;
         self.direction[1] = x * sin_a + y * cos_a;
+    }
+
+    pub fn to_gpu_ray(&self) -> GpuRay {
+        GpuRay {
+            origin: [self.origin().x, self.origin().y, self.origin().z],
+            _pad0: 0.0,
+            direction: [self.direction().x, self.direction().y, self.direction().z],
+            _pad1: 0.0,
+        }
     }
 
     pub fn dot(&self) -> f32 { self.direction.dot(self.direction) }

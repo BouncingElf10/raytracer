@@ -19,7 +19,7 @@ mod compute;
 mod profiler;
 mod bvh;
 
-const DEBUG_MODE: bool = true;
+const DEBUG_MODE: bool = false;
 
 #[tokio::main]
 async fn main() {
