@@ -21,15 +21,31 @@ mod bvh;
 mod shaders;
 mod gpu_harness;
 mod experiment;
+mod viz;
+mod diagrams;
+mod figures;
+mod capture;
+mod ui;
 
 const DEBUG_MODE: bool = true;
 
 #[tokio::main]
 async fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    if args.first().is_some_and(|a| a == "harness") {
-        run_harness(&args[1..]);
-        return;
+    match args.first().map(String::as_str) {
+        Some("harness") => {
+            run_harness(&args[1..]);
+            return;
+        }
+        Some("shot") => {
+            run_capture(&args[1..]).await;
+            return;
+        }
+        Some("studio") => {
+            run_studio(&args[1..]).await;
+            return;
+        }
+        _ => {}
     }
 
     profiler::profiler_start("init");
@@ -41,6 +57,10 @@ async fn main() {
     let scene = scene::create_scene();
     let renderer = renderer::Renderer::new();
     let mut delta_time = 0.0;
+
+    let mut bvh_view = renderer::BvhDebugView::new(scene_max_depth(&scene));
+    bvh_view.enabled = DEBUG_MODE;
+    let mut keys = DebugKeys::default();
 
     profiler::profiler_stop("init");
 
@@ -55,18 +75,21 @@ async fn main() {
         profiler::profiler_stop("gpu");
         profiler::profiler_start("debug");
 
-        if DEBUG_MODE {
-            renderer.render_debug(&camera, &scene, &mut canvas, false);
+        if bvh_view.enabled {
+            renderer.render_bvh_overlay(&camera, &scene, &mut canvas, &bvh_view);
         }
         profiler::profiler_stop("debug");
         profiler::profiler_stop("render");
 
         profiler::profiler_start("text and movement");
 
-        canvas.set_window_title(&format!("frame in: {:.0}ms   fps: {:.2}   sample count: {}",
+        keys.apply(&canvas, &mut bvh_view);
+
+        canvas.set_window_title(&format!("frame in: {:.0}ms   fps: {:.2}   samples: {}   {}   [B]toggle [L]leaves [{{/}}]depth [\\]all",
                                          profiler::get_delta_time() * 1000.0,
                                          1.0 /  profiler::get_delta_time(),
-                                         canvas.sample_count));
+                                         canvas.sample_count,
+                                         bvh_view.status()));
         canvas.present().unwrap();
         canvas.update();
         camera.resize(canvas.width(), canvas.height());
@@ -88,6 +111,61 @@ async fn main() {
     }
 }
 
+/// Deepest level across every mesh BVH in the scene, so the overlay's colour
+/// ramp and depth stepping cover the whole tree.
+fn scene_max_depth(scene: &scene::Scene) -> usize {
+    scene
+        .get_objects()
+        .iter()
+        .filter_map(|object| object.as_any().downcast_ref::<model::Mesh>())
+        .filter_map(|mesh| mesh.bvh.as_ref())
+        .map(bvh::tree_max_depth)
+        .max()
+        .unwrap_or(0)
+}
+
+/// Edge-triggered debug keys.
+///
+/// GLFW only reports whether a key is currently down, so a toggle read directly
+/// from `is_key_down` would fire on every frame the key is held. Remembering last
+/// frame's state turns each press into exactly one action.
+#[derive(Default)]
+struct DebugKeys {
+    toggle: bool,
+    leaves: bool,
+    previous: bool,
+    next: bool,
+    reset: bool,
+}
+
+impl DebugKeys {
+    fn apply(&mut self, canvas: &window::Canvas, view: &mut renderer::BvhDebugView) {
+        use glfw::Key;
+
+        fn pressed(down: bool, was_down: &mut bool) -> bool {
+            let fired = down && !*was_down;
+            *was_down = down;
+            fired
+        }
+
+        if pressed(canvas.is_key_down(Key::B), &mut self.toggle) {
+            view.enabled = !view.enabled;
+        }
+        if pressed(canvas.is_key_down(Key::L), &mut self.leaves) {
+            view.leaves_only = !view.leaves_only;
+        }
+        if pressed(canvas.is_key_down(Key::LeftBracket), &mut self.previous) {
+            view.step_depth(-1);
+        }
+        if pressed(canvas.is_key_down(Key::RightBracket), &mut self.next) {
+            view.step_depth(1);
+        }
+        if pressed(canvas.is_key_down(Key::Backslash), &mut self.reset) {
+            view.show_all_depths();
+        }
+    }
+}
+
 /// Runs the BVH data-collection harness instead of opening the interactive
 /// window. Exits non-zero on a bad flag or an I/O failure so it can be driven
 /// from a script.
@@ -102,6 +180,59 @@ fn run_harness(args: &[String]) {
 
     if let Err(error) = experiment::run(&config) {
         eprintln!("harness failed: {error}");
+        std::process::exit(1);
+    }
+}
+
+/// Opens the BVH studio. `--screenshot PATH` renders a fixed number of frames,
+/// writes the whole window including the panels, and exits.
+async fn run_studio(args: &[String]) {
+    let mut width = 1440;
+    let mut height = 900;
+    let mut screenshot = None;
+    let mut frames = 40;
+
+    let mut i = 0;
+    while i < args.len() {
+        let value = args.get(i + 1);
+        match args[i].as_str() {
+            "--width" => { width = value.and_then(|v| v.parse().ok()).unwrap_or(width); i += 2; }
+            "--height" => { height = value.and_then(|v| v.parse().ok()).unwrap_or(height); i += 2; }
+            "--frames" => { frames = value.and_then(|v| v.parse().ok()).unwrap_or(frames); i += 2; }
+            "--screenshot" => {
+                let Some(path) = value else {
+                    eprintln!("--screenshot requires a path");
+                    std::process::exit(2);
+                };
+                screenshot = Some(std::path::PathBuf::from(path));
+                i += 2;
+            }
+            other => {
+                eprintln!("unknown flag {other}\n\nusage: testyo studio [--width N] [--height N] [--screenshot PATH [--frames N]]");
+                std::process::exit(2);
+            }
+        }
+    }
+
+    match screenshot {
+        Some(path) => ui::run_screenshot(width, height, frames, &path).await,
+        None => ui::run(width, height).await,
+    }
+}
+
+/// Renders the interactive scene offscreen and writes it out with the BVH
+/// overlay, for figures that need the wireframe rather than a heatmap.
+async fn run_capture(args: &[String]) {
+    let config = match capture::parse_args(args) {
+        Ok(config) => config,
+        Err(message) => {
+            eprintln!("{message}");
+            std::process::exit(2);
+        }
+    };
+
+    if let Err(error) = capture::run(&config).await {
+        eprintln!("capture failed: {error}");
         std::process::exit(1);
     }
 }

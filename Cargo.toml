@@ -14,3 +14,7 @@ futures = "0.3.31"
 pollster = "0.4.0"
 indexmap = "2.13.0"
 once_cell = "1.21.3"
+image = { version = "0.25.9", default-features = false, features = ["png"] }
+# 0.27 is the imgui-wgpu line built against wgpu 28; 0.28 moved to wgpu 29.
+imgui = "0.12"
+imgui-wgpu = "0.27"

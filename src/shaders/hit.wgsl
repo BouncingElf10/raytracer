@@ -162,6 +162,7 @@ var<private> ctr_interior_visits: u32 = 0u;
 var<private> ctr_prim_tests: u32 = 0u;
 var<private> ctr_ray_count: u32 = 0u;
 var<private> ctr_incomplete: u32 = 0u;
+var<private> ctr_max_stack: u32 = 0u;
 //#endif
 
 /// Reciprocal of a direction with no infinities.
@@ -303,6 +304,9 @@ fn traverse_bvh(ray: Ray) -> HitInfo {
                     stack[stack_ptr] = left_child;
                     stack_ptr += 1u;
                 }
+//#if INSTRUMENTED
+                ctr_max_stack = max(ctr_max_stack, stack_ptr);
+//#endif
             }
         }
     }

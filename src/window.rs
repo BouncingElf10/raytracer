@@ -32,6 +32,9 @@ pub struct Canvas {
     pub color_buffer: Option<wgpu::Buffer>,
     pub staging_buffer: Option<wgpu::Buffer>,
     pub counts_buffer: Option<wgpu::Buffer>,
+    /// Per-pixel traversal counters. Present only when the compute pipeline was
+    /// built from the instrumented shader variant.
+    pub counter_buffer: Option<wgpu::Buffer>,
 }
 
 impl Canvas {
@@ -208,7 +211,8 @@ impl Canvas {
         Self { width, height, window, events, glfw, surface, device, queue, config, pixel_buffer,
             pixel_texture, bind_group, bind_group_layout, render_pipeline, sampler, accum_buffer, sample_count,
             compute_pipeline: None, compute_bind_group: None, sphere_buffer: None, triangle_buffer: None,
-            plane_buffer: None, ray_buffer: None, hit_buffer: None, color_buffer: None, staging_buffer: None, counts_buffer: None, }
+            plane_buffer: None, ray_buffer: None, hit_buffer: None, color_buffer: None, staging_buffer: None, counts_buffer: None,
+            counter_buffer: None, }
     }
 
     fn resize(&mut self, width: u32, height: u32) {
@@ -260,15 +264,25 @@ impl Canvas {
         });
 
         self.reset_accumulation();
+        self.invalidate_pipeline();
+    }
+
+    /// Drops the compute pipeline so the next frame rebuilds it from the scene.
+    ///
+    /// This is how the studio applies a new BVH: rebuild the tree, invalidate,
+    /// and the next frame re-flattens and re-uploads everything.
+    pub fn invalidate_pipeline(&mut self) {
         self.compute_pipeline = None;
         self.compute_bind_group = None;
         self.ray_buffer = None;
         self.color_buffer = None;
         self.staging_buffer = None;
         self.counts_buffer = None;
+        self.counter_buffer = None;
     }
 
-    fn render(&mut self, clear_color: wgpu::Color) -> Result<(), wgpu::SurfaceError> {
+    /// Uploads the CPU framebuffer into the texture the screen pass samples.
+    fn upload_pixels(&mut self) {
         let rgba_data: Vec<u8> = self.pixel_buffer
             .iter()
             .flat_map(|&color| {
@@ -294,6 +308,10 @@ impl Canvas {
                 depth_or_array_layers: 1,
             },
         );
+    }
+
+    fn render(&mut self, clear_color: wgpu::Color) -> Result<(), wgpu::SurfaceError> {
+        self.upload_pixels();
 
         let output = self.surface.get_current_texture()?;
         let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -382,15 +400,207 @@ impl Canvas {
     }
 
     pub fn update(&mut self) {
+        self.pump_events();
+    }
+
+    /// Polls the window, applies the events the canvas cares about, and hands the
+    /// list back so a UI layer can consume the same events.
+    pub fn pump_events(&mut self) -> Vec<WindowEvent> {
         self.glfw.poll_events();
-        let events: Vec<_> = glfw::flush_messages(&self.events).collect();
-        for (_, event) in events {
-            self.handle_event(event);
+        let events: Vec<WindowEvent> = glfw::flush_messages(&self.events)
+            .map(|(_, event)| event)
+            .collect();
+
+        for event in &events {
+            self.handle_event(event.clone());
         }
+
+        events
     }
 
     pub fn present(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.render(wgpu::Color { r: 0.0, g: 0.0, b: 0.0, a: 1.0, })
+    }
+
+    /// Presents the traced image and draws `draw_data` on top of it in the same
+    /// pass, so the UI composites over the render without a second surface
+    /// acquisition.
+    pub fn present_with_ui(
+        &mut self,
+        draw_data: &imgui::DrawData,
+        ui_renderer: &mut imgui_wgpu::Renderer,
+    ) -> Result<(), wgpu::SurfaceError> {
+        self.upload_pixels();
+
+        let output = self.surface.get_current_texture()?;
+        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("UI Encoder"),
+        });
+
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render + UI Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
+                multiview_mask: None,
+            });
+
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_bind_group(0, &self.bind_group, &[]);
+            render_pass.draw(0..3, 0..1);
+
+            ui_renderer
+                .render(draw_data, &self.queue, &self.device, &mut render_pass)
+                .expect("imgui render failed");
+        }
+
+        self.queue.submit(std::iter::once(encoder.finish()));
+        output.present();
+
+        Ok(())
+    }
+
+    pub fn surface_format(&self) -> wgpu::TextureFormat {
+        self.config.format
+    }
+
+    /// Renders the frame and the UI into an offscreen target and reads it back as
+    /// RGB8.
+    ///
+    /// The surface itself cannot be read from, so documenting or verifying what
+    /// the panels actually look like needs its own render target.
+    pub fn capture_with_ui(
+        &mut self,
+        draw_data: &imgui::DrawData,
+        ui_renderer: &mut imgui_wgpu::Renderer,
+    ) -> Vec<u8> {
+        self.upload_pixels();
+
+        let target = self.device.create_texture(&wgpu::TextureDescriptor {
+            label: Some("UI Capture Target"),
+            size: wgpu::Extent3d { width: self.width, height: self.height, depth_or_array_layers: 1 },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: self.config.format,
+            usage: TextureUsages::RENDER_ATTACHMENT | TextureUsages::COPY_SRC,
+            view_formats: &[],
+        });
+        let view = target.create_view(&wgpu::TextureViewDescriptor::default());
+
+        // copy_texture_to_buffer needs each row padded to 256 bytes.
+        let unpadded = self.width * 4;
+        let padded = unpadded.div_ceil(256) * 256;
+
+        let readback = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("UI Capture Readback"),
+            size: (padded * self.height) as u64,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("UI Capture Encoder"),
+        });
+
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("UI Capture Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
+                multiview_mask: None,
+            });
+
+            render_pass.set_pipeline(&self.render_pipeline);
+            render_pass.set_bind_group(0, &self.bind_group, &[]);
+            render_pass.draw(0..3, 0..1);
+
+            ui_renderer
+                .render(draw_data, &self.queue, &self.device, &mut render_pass)
+                .expect("imgui capture render failed");
+        }
+
+        encoder.copy_texture_to_buffer(
+            target.as_image_copy(),
+            wgpu::TexelCopyBufferInfo {
+                buffer: &readback,
+                layout: wgpu::TexelCopyBufferLayout {
+                    offset: 0,
+                    bytes_per_row: Some(padded),
+                    rows_per_image: Some(self.height),
+                },
+            },
+            wgpu::Extent3d { width: self.width, height: self.height, depth_or_array_layers: 1 },
+        );
+
+        self.queue.submit(std::iter::once(encoder.finish()));
+        self.device
+            .poll(wgpu::PollType::Wait { submission_index: None, timeout: None })
+            .expect("GPU was not polled");
+
+        let slice = readback.slice(..);
+        let (tx, rx) = futures::channel::oneshot::channel();
+        slice.map_async(wgpu::MapMode::Read, move |result| { let _ = tx.send(result); });
+        self.device
+            .poll(wgpu::PollType::Wait { submission_index: None, timeout: None })
+            .expect("GPU was not polled");
+        pollster::block_on(rx).unwrap().unwrap();
+
+        let data = slice.get_mapped_range();
+        let swap_red_blue = matches!(
+            self.config.format,
+            wgpu::TextureFormat::Bgra8Unorm | wgpu::TextureFormat::Bgra8UnormSrgb
+        );
+
+        let mut rgb = Vec::with_capacity((self.width * self.height * 3) as usize);
+        for y in 0..self.height {
+            let row = (y * padded) as usize;
+            for x in 0..self.width {
+                let offset = row + (x * 4) as usize;
+                let (a, b) = (data[offset], data[offset + 2]);
+                let (r, blue) = if swap_red_blue { (b, a) } else { (a, b) };
+                rgb.extend_from_slice(&[r, data[offset + 1], blue]);
+            }
+        }
+
+        drop(data);
+        readback.unmap();
+        rgb
+    }
+
+    /// Captured means the cursor is hidden and locked for mouse-look. The studio
+    /// leaves it free so the pointer can reach the panels.
+    pub fn set_cursor_captured(&mut self, captured: bool) {
+        self.window.set_cursor_mode(if captured {
+            CursorMode::Disabled
+        } else {
+            CursorMode::Normal
+        });
+    }
+
+    pub fn is_mouse_button_down(&self, button: glfw::MouseButton) -> bool {
+        self.window.get_mouse_button(button) == Action::Press
     }
 
     pub fn clear(&mut self, camera: &Camera) {
@@ -406,6 +616,11 @@ impl Canvas {
 
     pub fn pixel_count(&self) -> u32 {
         self.width * self.height
+    }
+
+    /// The composited frame, including any debug overlay, as 0x00RRGGBB.
+    pub fn pixel_buffer(&self) -> &[u32] {
+        &self.pixel_buffer
     }
     
     pub fn is_open(&self) -> bool {

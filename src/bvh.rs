@@ -531,6 +531,43 @@ fn to_mesh(prims: Vec<Triangle>) -> Mesh {
     mesh
 }
 
+/// One node as seen by the debug overlay.
+pub struct NodeVisit<'a> {
+    pub aabb: &'a AABB,
+    pub depth: usize,
+    pub is_leaf: bool,
+    /// Primitives in this leaf, or 0 for an interior node.
+    pub prim_count: usize,
+}
+
+/// Walks every node -- interior and leaf -- carrying its depth.
+///
+/// The leaf-only walker below cannot show *why* a tree is bad: an unbalanced
+/// build looks the same at the leaves as a balanced one until you can see which
+/// level each box belongs to.
+pub fn traverse_nodes_with_depth<F>(node: &BVHNode, f: &mut F) where F: FnMut(NodeVisit) {
+    fn walk<F: FnMut(NodeVisit)>(node: &BVHNode, depth: usize, f: &mut F) {
+        match node {
+            BVHNode::LeafNode { aabb, objects } => {
+                f(NodeVisit { aabb, depth, is_leaf: true, prim_count: objects.get_triangles().len() });
+            }
+            BVHNode::BVHNode { aabb, left, right } => {
+                f(NodeVisit { aabb, depth, is_leaf: false, prim_count: 0 });
+                walk(left, depth + 1, f);
+                walk(right, depth + 1, f);
+            }
+        }
+    }
+    walk(node, 0, f);
+}
+
+/// Deepest level in the tree, for scaling the overlay's depth colour ramp.
+pub fn tree_max_depth(root: &BVHNode) -> usize {
+    let mut max = 0;
+    traverse_nodes_with_depth(root, &mut |visit| max = max.max(visit.depth));
+    max
+}
+
 pub fn traverse_leaf_nodes<F>(node: &BVHNode, f: &mut F) where F: FnMut(&AABB, &Arc<Mesh>) {
     match node {
         BVHNode::LeafNode { aabb, objects } => {

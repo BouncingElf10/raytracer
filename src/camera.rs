@@ -54,6 +54,40 @@ impl Camera {
         Some((sx, sy))
     }
 
+    /// Projects a world-space segment, clipping it against the near plane first.
+    ///
+    /// `world_to_screen` rejects any point behind the camera, so an edge with one
+    /// endpoint behind it would be dropped entirely and the wireframe box would
+    /// visibly fall apart as you walk into it. Clipping the segment to the
+    /// visible half-space keeps the surviving portion drawable.
+    pub fn project_segment(&self, a: Vec3, b: Vec3) -> Option<((i32, i32), (i32, i32))> {
+        const NEAR: f32 = 0.01;
+
+        let forward = self.ray.direction().normalize();
+        let origin = self.ray.origin();
+
+        // Signed distance in front of the camera.
+        let depth_a = (a - origin).dot(forward);
+        let depth_b = (b - origin).dot(forward);
+
+        if depth_a < NEAR && depth_b < NEAR {
+            return None;
+        }
+
+        let (a, b) = if depth_a < NEAR {
+            // Slide `a` forward to where the segment crosses the near plane.
+            let t = (NEAR - depth_a) / (depth_b - depth_a);
+            (a + (b - a) * t, b)
+        } else if depth_b < NEAR {
+            let t = (NEAR - depth_b) / (depth_a - depth_b);
+            (a, b + (a - b) * t)
+        } else {
+            (a, b)
+        };
+
+        Some((self.world_to_screen(a)?, self.world_to_screen(b)?))
+    }
+
     pub fn resize(&mut self, width: u32, height: u32) {
         self.width = width;
         self.height = height;
