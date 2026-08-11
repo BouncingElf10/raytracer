@@ -9,6 +9,9 @@ pub trait Hittable {
     fn hit(&self, ray: &Ray) -> HitInfo;
     fn set_material(&mut self, material: Material);
     fn as_any(&self) -> &dyn Any;
+    /// Mutable downcast, so the studio can swap a mesh's BVH in place rather than
+    /// rebuilding the whole scene on every heuristic change.
+    fn as_any_mut(&mut self) -> &mut dyn Any;
     fn to_aabb(&self) -> AABB;
 }
 #[allow(dead_code)]
@@ -173,6 +176,9 @@ impl Hittable for Triangle {
     fn as_any(&self) -> &dyn Any {
         self
     }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
     fn to_aabb(&self) -> AABB {
         let mut min = Vec3::splat(f32::MAX);
         let mut max = Vec3::splat(f32::MIN);
@@ -239,6 +245,9 @@ impl Hittable for Plane {
         self.material = material;
     }
     fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
     fn to_aabb(&self) -> AABB {
@@ -316,6 +325,9 @@ impl Hittable for Sphere {
     fn as_any(&self) -> &dyn Any {
         self
     }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
     fn to_aabb(&self) -> AABB {
         AABB::new(self.pos - self.radius, self.pos + self.radius)
     }
@@ -338,6 +350,9 @@ impl Hittable for Mesh {
         });
     }
     fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }
     fn to_aabb(&self) -> AABB {

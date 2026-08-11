@@ -1,4 +1,3 @@
-const MAX_BOUNCES: u32 = 10u;
 const PI: f32 = 3.14159265359;
 
 fn trace_path(initial_ray: Ray, seed: ptr<function, u32>) -> vec3<f32> {
@@ -6,7 +5,9 @@ fn trace_path(initial_ray: Ray, seed: ptr<function, u32>) -> vec3<f32> {
     var throughput = vec3<f32>(1.0);
     var accumulated_light = vec3<f32>(0.0);
 
-    for (var bounce = 0u; bounce < MAX_BOUNCES; bounce++) {
+    let max_bounces = max(counts.max_bounces, 1u);
+
+    for (var bounce = 0u; bounce < max_bounces; bounce++) {
         let hit = trace_scene(ray);
 
         if (hit.has_hit == 0u) {

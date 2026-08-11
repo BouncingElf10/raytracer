@@ -37,7 +37,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         color += trace_path(ray, &rng_state);
     }
 
-    output_colors[idx] = vec4<f32>(color / f32(samples), 1.0);
+    var out_color = color / f32(samples);
 
 //#if INSTRUMENTED
     ray_counters[idx] = RayCounters(
@@ -46,7 +46,50 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
         ctr_ray_count,
         ctr_interior_visits,
         ctr_incomplete,
-        0u, 0u, 0u,
+        ctr_max_stack,
+        0u, 0u,
     );
+
+    if (counts.display_mode != DISPLAY_BEAUTY) {
+        out_color = cost_view(out_color);
+    }
 //#endif
+
+    output_colors[idx] = vec4<f32>(out_color, 1.0);
 }
+
+//#if INSTRUMENTED
+/// Maps this invocation's counters onto the selected ramp.
+///
+/// Written into the same colour buffer the renderer accumulates, so a cost view
+/// converges over frames exactly like the render does -- the picture settles
+/// instead of flickering with per-frame sampling noise.
+fn cost_view(rendered: vec3<f32>) -> vec3<f32> {
+    let rays = max(ctr_ray_count, 1u);
+
+    var value = 0.0;
+    switch counts.display_mode {
+        case DISPLAY_NODE_VISITS: { value = f32(ctr_node_visits) / f32(rays); }
+        case DISPLAY_PRIM_TESTS: { value = f32(ctr_prim_tests) / f32(rays); }
+        // A high-water mark, not a total, so it is not divided by ray count.
+        case DISPLAY_TRAVERSAL_DEPTH: { value = f32(ctr_max_stack); }
+        case DISPLAY_LEAF_VISITS: { value = f32(ctr_node_visits - ctr_interior_visits) / f32(rays); }
+        case DISPLAY_INTERIOR_VISITS: { value = f32(ctr_interior_visits) / f32(rays); }
+        default: { value = 0.0; }
+    }
+
+    // Pixels that never entered the hierarchy stay black rather than taking the
+    // ramp's darkest colour, so empty space reads as absent, not as cheap.
+    if (ctr_ray_count == 0u) {
+        return vec3<f32>(0.0);
+    }
+
+    let heat = palette_sample(counts.palette, value / max(counts.heat_scale, 0.0001));
+
+    // The colour buffer is gamma-corrected downstream, so undo that here to keep
+    // ramp colours exactly as authored.
+    let linear_heat = heat * heat;
+
+    return mix(linear_heat, rendered, clamp(counts.heat_mix, 0.0, 1.0));
+}
+//#endif

@@ -85,6 +85,21 @@ pub fn get_delta_time() -> f64 {
     PROFILER.lock().unwrap().delta_time
 }
 
+/// Milliseconds accumulated under `name` this frame, at any nesting depth.
+///
+/// Lets the studio show where a frame actually went, which is the same question
+/// the whole project is about -- just applied to the renderer rather than to a
+/// ray.
+pub fn frame_section_ms(name: &str) -> f64 {
+    let profiler = PROFILER.lock().unwrap();
+    profiler
+        .frame_entries
+        .iter()
+        .filter(|((entry_name, _), _)| entry_name == name)
+        .map(|(_, (time, _))| time * 1000.0)
+        .sum()
+}
+
 pub fn profiler_start(name: &str) {
     PROFILER.lock().unwrap().start(name);
 }

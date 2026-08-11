@@ -94,8 +94,63 @@ pub struct Counts {
     pub bvh_index_count: u32,
     pub samples: u32,
     pub rng_seed: u32,
+    pub display_mode: u32,
+    pub palette: u32,
+    pub heat_scale: f32,
+    pub heat_mix: f32,
+    pub max_bounces: u32,
     pub _pad0: u32,
-    pub _pad1: u32,
+}
+
+impl Counts {
+    /// Byte offset of `frame_number`, patched in place every frame by the
+    /// renderer. Kept next to the struct so the two cannot drift apart.
+    pub const FRAME_NUMBER_OFFSET: u64 = 20;
+}
+
+/// Live cost views, mirroring the `DISPLAY_*` constants in `shaders/types.wgsl`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DisplayMode {
+    Beauty = 0,
+    NodeVisits = 1,
+    PrimTests = 2,
+    TraversalDepth = 3,
+    LeafVisits = 4,
+    InteriorVisits = 5,
+}
+
+impl DisplayMode {
+    pub const ALL: [DisplayMode; 6] = [
+        DisplayMode::Beauty,
+        DisplayMode::NodeVisits,
+        DisplayMode::PrimTests,
+        DisplayMode::TraversalDepth,
+        DisplayMode::LeafVisits,
+        DisplayMode::InteriorVisits,
+    ];
+
+    pub fn label(self) -> &'static str {
+        match self {
+            DisplayMode::Beauty => "Rendered image",
+            DisplayMode::NodeVisits => "Node visits / ray",
+            DisplayMode::PrimTests => "Triangle tests / ray",
+            DisplayMode::TraversalDepth => "Peak traversal depth",
+            DisplayMode::LeafVisits => "Leaf visits / ray",
+            DisplayMode::InteriorVisits => "Interior visits / ray",
+        }
+    }
+
+    /// Sensible ramp ceiling when the view is first selected.
+    pub fn default_scale(self) -> f32 {
+        match self {
+            DisplayMode::Beauty => 1.0,
+            DisplayMode::NodeVisits => 40.0,
+            DisplayMode::PrimTests => 40.0,
+            DisplayMode::TraversalDepth => 24.0,
+            DisplayMode::LeafVisits => 16.0,
+            DisplayMode::InteriorVisits => 24.0,
+        }
+    }
 }
 
 /// Mirrors `RayCounters` in `shaders/types.wgsl`: one record per pixel, written
@@ -108,9 +163,9 @@ pub struct GpuRayCounters {
     pub ray_count: u32,
     pub interior_visits: u32,
     pub incomplete: u32,
+    pub max_stack: u32,
     pub _pad0: u32,
     pub _pad1: u32,
-    pub _pad2: u32,
 }
 
 #[repr(C)]

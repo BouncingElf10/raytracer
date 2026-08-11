@@ -6,10 +6,14 @@ use crate::shaders::{self, ShaderVariant};
 use crate::window::Canvas;
 use wgpu::util::DeviceExt;
 
-pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
-    // The interactive renderer always uses the clean variant: it never collects
-    // counters, and instrumentation would only cost it frame rate.
-    let shader_source = shaders::compose(ShaderVariant::Clean);
+/// Builds the compute pipeline for the requested shader variant.
+///
+/// The studio uses the instrumented variant so its live cost views have counters
+/// to read; it costs frame rate, which is the right trade for a tool whose whole
+/// job is showing where the cost is.
+pub fn setup_compute_pipeline_with(canvas: &mut Canvas, scene: &Scene, variant: ShaderVariant) {
+    let instrumented = variant == ShaderVariant::Instrumented;
+    let shader_source = shaders::compose(variant);
 
     let shader = canvas.device().create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("Raytrace Compute Shader"),
@@ -29,10 +33,15 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
         bvh_node_count: bvh_nodes.len() as u32,
         bvh_index_count: bvh_indices.len() as u32,
         // One sample per dispatch; the interactive path accumulates across frames.
+        // The studio overwrites these live through `Canvas::write_counts`.
         samples: 1,
         rng_seed: 0,
+        display_mode: 0,
+        palette: 0,
+        heat_scale: 40.0,
+        heat_mix: 0.0,
+        max_bounces: 10,
         _pad0: 0,
-        _pad1: 0,
     };
 
     println!("Creating counts buffer:");
@@ -103,9 +112,18 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
         usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
     });
 
-    let bind_group_layout = canvas.device().create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-        label: Some("Compute Bind Group Layout"),
-        entries: &[
+    // Only the instrumented variant declares binding 8, so the clean pipeline
+    // never allocates this.
+    let counter_buffer = instrumented.then(|| {
+        canvas.device().create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Live Counter Buffer"),
+            size: (pixel_count * std::mem::size_of::<crate::gpu_types::GpuRayCounters>()) as u64,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        })
+    });
+
+    let mut layout_entries = vec![
             wgpu::BindGroupLayoutEntry {
                 binding: 0,
                 visibility: wgpu::ShaderStages::COMPUTE,
@@ -186,22 +204,45 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
                 },
                 count: None,
             },
-        ],
+    ];
+
+    if instrumented {
+        layout_entries.push(wgpu::BindGroupLayoutEntry {
+            binding: 8,
+            visibility: wgpu::ShaderStages::COMPUTE,
+            ty: wgpu::BindingType::Buffer {
+                ty: wgpu::BufferBindingType::Storage { read_only: false },
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            count: None,
+        });
+    }
+
+    let bind_group_layout = canvas.device().create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        label: Some("Compute Bind Group Layout"),
+        entries: &layout_entries,
     });
+
+    let mut bind_entries = vec![
+        wgpu::BindGroupEntry { binding: 0, resource: ray_buffer.as_entire_binding() },
+        wgpu::BindGroupEntry { binding: 1, resource: color_buffer.as_entire_binding() },
+        wgpu::BindGroupEntry { binding: 2, resource: sphere_buffer.as_entire_binding() },
+        wgpu::BindGroupEntry { binding: 3, resource: triangle_buffer.as_entire_binding() },
+        wgpu::BindGroupEntry { binding: 4, resource: plane_buffer.as_entire_binding() },
+        wgpu::BindGroupEntry { binding: 5, resource: counts_buffer.as_entire_binding() },
+        wgpu::BindGroupEntry { binding: 6, resource: bvh_node_buffer.as_entire_binding() },
+        wgpu::BindGroupEntry { binding: 7, resource: bvh_index_buffer.as_entire_binding() },
+    ];
+
+    if let Some(buffer) = &counter_buffer {
+        bind_entries.push(wgpu::BindGroupEntry { binding: 8, resource: buffer.as_entire_binding() });
+    }
 
     let bind_group = canvas.device().create_bind_group(&wgpu::BindGroupDescriptor {
         label: Some("Compute Bind Group"),
         layout: &bind_group_layout,
-        entries: &[
-            wgpu::BindGroupEntry { binding: 0, resource: ray_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 1, resource: color_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 2, resource: sphere_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 3, resource: triangle_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 4, resource: plane_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 5, resource: counts_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 6, resource: bvh_node_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 7, resource: bvh_index_buffer.as_entire_binding() },
-        ],
+        entries: &bind_entries,
     });
 
     let pipeline_layout = canvas.device().create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
@@ -228,6 +269,7 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
     canvas.color_buffer = Some(color_buffer);
     canvas.staging_buffer = Some(staging_buffer);
     canvas.counts_buffer = Some(counts_buffer);
+    canvas.counter_buffer = counter_buffer;
 }
 
 fn extract_scene_data(scene: &Scene) -> (Vec<GpuSphere>, Vec<GpuTriangle>, Vec<GpuPlane>) {

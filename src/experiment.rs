@@ -25,6 +25,7 @@ use crate::bvh::{
 };
 use crate::camera::Camera;
 use crate::color::Color;
+use crate::figures;
 use crate::gpu_harness::{CounterSummary, GpuHarness, TimingSummary};
 use crate::gpu_types::{GpuPlane, GpuRay, GpuTriangle};
 use crate::importer::import_obj;
@@ -60,12 +61,17 @@ pub struct ExperimentConfig {
     pub output_path: PathBuf,
     /// Run Pass A twice per record and check the counts match exactly.
     pub verify_determinism: bool,
+    /// When set, write heatmaps, comparison sheets and structure diagrams here.
+    pub figures_dir: Option<PathBuf>,
 }
 
 impl Default for ExperimentConfig {
     fn default() -> Self {
         Self {
-            camera_origin: Vec3::new(0.0, 0.0, 5.0),
+            // Inside the room, close enough that the mesh fills most of the
+            // frame. Framing matters for the figures: rays that miss the model
+            // entirely contribute nothing but background to a traversal heatmap.
+            camera_origin: Vec3::new(0.0, 0.0, 2.3),
             camera_direction: Vec3::new(0.0, 0.0, -1.0),
             width: 640,
             height: 480,
@@ -86,6 +92,7 @@ impl Default for ExperimentConfig {
             ],
             output_path: PathBuf::from("results/bvh_metrics.csv"),
             verify_determinism: false,
+            figures_dir: None,
         }
     }
 }
@@ -158,8 +165,10 @@ pub fn run(config: &ExperimentConfig) -> io::Result<()> {
             continue;
         }
 
+        let mut figure_inputs = Vec::new();
+
         for heuristic in SplitHeuristic::ALL {
-            let record = collect_record(
+            let (record, figure_input) = collect_record(
                 config,
                 &harness,
                 &scene_name,
@@ -170,6 +179,24 @@ pub fn run(config: &ExperimentConfig) -> io::Result<()> {
             );
             print_record(&record);
             records.push(record);
+            if let Some(input) = figure_input {
+                figure_inputs.push(input);
+            }
+        }
+
+        // Figures are generated per scene rather than per record so every panel
+        // of a comparison shares one colour scale.
+        if let Some(dir) = &config.figures_dir {
+            match figures::render_scene_figures(
+                dir,
+                &scene_name,
+                config.width,
+                config.height,
+                &figure_inputs,
+            ) {
+                Ok(paths) => println!("figures: {} file(s) in {}", paths.len(), dir.join(&scene_name).display()),
+                Err(error) => eprintln!("failed to write figures for {scene_name}: {error}"),
+            }
         }
     }
 
@@ -191,7 +218,7 @@ fn collect_record(
     triangles: &[Triangle],
     gpu_triangles: &[GpuTriangle],
     planes: &[GpuPlane],
-) -> MetricRecord {
+) -> (MetricRecord, Option<figures::FigureInput>) {
     let params = BuildParams {
         heuristic,
         leaf_cutoff: config.leaf_cutoff,
@@ -238,10 +265,11 @@ fn collect_record(
     );
 
     // Pass A: counts only.
-    let counters = harness.collect_counters(&upload);
+    let want_figures = config.figures_dir.is_some();
+    let (counters, records) = harness.collect_counters(&upload, want_figures);
 
     if config.verify_determinism {
-        let repeat = harness.collect_counters(&upload);
+        let (repeat, _) = harness.collect_counters(&upload, false);
         let identical = repeat.total_node_visits == counters.total_node_visits
             && repeat.total_prim_tests == counters.total_prim_tests
             && repeat.total_rays == counters.total_rays;
@@ -254,7 +282,20 @@ fn collect_record(
     // Pass B: wall-clock only, same camera/resolution/samples/seed.
     let timing = harness.measure_render_time(&upload, config.warmup_runs, config.timed_runs);
 
-    MetricRecord {
+    // The colour capture is deliberately last: it is an extra dispatch that must
+    // not sit between the timed runs.
+    let figure_input = records.map(|records| figures::FigureInput {
+        heuristic: heuristic.name().to_string(),
+        records,
+        colors: harness.capture_color(&upload),
+        tree,
+        node_visits_per_ray: counters.node_visits_per_ray,
+        prim_tests_per_ray: counters.prim_tests_per_ray,
+        render_time_ms: timing.valid.then_some(timing.mean_ms),
+        max_depth: stats.max_depth,
+    });
+
+    let record = MetricRecord {
         scene: scene_name.to_string(),
         heuristic: heuristic.name(),
         counters,
@@ -262,7 +303,9 @@ fn collect_record(
         stats,
         unmatched_prims: flattened.unmatched_prims,
         flattened_index_count: flattened.indices.len(),
-    }
+    };
+
+    (record, figure_input)
 }
 
 fn print_record(record: &MetricRecord) {
@@ -577,6 +620,21 @@ pub fn parse_args(args: &[String]) -> Result<ExperimentConfig, String> {
                 config.verify_determinism = true;
                 i += 1;
             }
+            "--figures" => {
+                // Bare --figures uses a default directory; a following value that
+                // is not itself a flag overrides it.
+                let explicit = args.get(i + 1).filter(|next| !next.starts_with("--"));
+                match explicit {
+                    Some(dir) => {
+                        config.figures_dir = Some(PathBuf::from(dir));
+                        i += 2;
+                    }
+                    None => {
+                        config.figures_dir = Some(PathBuf::from("results/figures"));
+                        i += 1;
+                    }
+                }
+            }
             other => return Err(format!("unknown flag {other}\n\n{}", usage())),
         }
     }
@@ -610,6 +668,7 @@ pub fn usage() -> String {
      \x20 --warmup N              dispatches discarded before timing\n\
      \x20 --runs N                timed dispatches to average\n\
      \x20 --no-normalize          keep each mesh at its authored scale\n\
-     \x20 --verify                run Pass A twice and check counts match"
+     \x20 --verify                run Pass A twice and check counts match\n\
+     \x20 --figures [DIR]         write heatmaps and diagrams (default results/figures)"
         .to_string()
 }

@@ -78,6 +78,7 @@ pub struct GpuHarness {
 
     ray_buffer: wgpu::Buffer,
     color_buffer: wgpu::Buffer,
+    color_staging: wgpu::Buffer,
     counter_buffer: wgpu::Buffer,
     counter_staging: wgpu::Buffer,
 
@@ -155,10 +156,19 @@ impl GpuHarness {
             mapped_at_creation: false,
         });
 
+        let color_bytes = (pixel_count * size_of::<GpuColor>()) as u64;
+
         let color_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: Some("Harness Color Buffer"),
-            size: (pixel_count * size_of::<GpuColor>()) as u64,
-            usage: wgpu::BufferUsages::STORAGE,
+            size: color_bytes,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
+
+        let color_staging = device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("Harness Color Staging"),
+            size: color_bytes,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
@@ -213,6 +223,7 @@ impl GpuHarness {
             instrumented_layout,
             ray_buffer,
             color_buffer,
+            color_staging,
             counter_buffer,
             counter_staging,
             timestamps,
@@ -274,8 +285,14 @@ impl GpuHarness {
             bvh_index_count: bvh_indices.len() as u32,
             samples,
             rng_seed,
+            // The harness always measures the rendered image. Live cost views are
+            // a studio display option and must never alter a measurement run.
+            display_mode: 0,
+            palette: 0,
+            heat_scale: 1.0,
+            heat_mix: 0.0,
+            max_bounces: 10,
             _pad0: 0,
-            _pad1: 0,
         };
 
         let sphere_buffer = self.storage_init("Harness Spheres", bytemuck::cast_slice(&spheres));
@@ -332,7 +349,15 @@ impl GpuHarness {
     }
 
     /// Pass A (§6): one instrumented dispatch, counters read back, timing ignored.
-    pub fn collect_counters(&self, scene: &SceneUpload) -> CounterSummary {
+    ///
+    /// When `keep_records` is set the raw per-pixel counters are returned as well,
+    /// for the figure generator. They are ~32 bytes per pixel, so the caller asks
+    /// for them only when it is actually going to draw something.
+    pub fn collect_counters(
+        &self,
+        scene: &SceneUpload,
+        keep_records: bool,
+    ) -> (CounterSummary, Option<Vec<GpuRayCounters>>) {
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Instrumented Pass"),
         });
@@ -364,8 +389,46 @@ impl GpuHarness {
         let bytes = self.read_back(&self.counter_staging);
         let records: &[GpuRayCounters] = bytemuck::cast_slice(&bytes);
         let summary = reduce_counters(records);
+        let kept = keep_records.then(|| records.to_vec());
         self.counter_staging.unmap();
-        summary
+        (summary, kept)
+    }
+
+    /// One clean dispatch whose colour output is read back, for the reference
+    /// image that accompanies the heatmaps. Values are linear HDR; tone mapping
+    /// happens in `viz`.
+    pub fn capture_color(&self, scene: &SceneUpload) -> Vec<[f32; 3]> {
+        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Colour Capture"),
+        });
+
+        {
+            let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Colour Capture"),
+                timestamp_writes: None,
+            });
+            pass.set_pipeline(&self.clean_pipeline);
+            pass.set_bind_group(0, &scene.clean_bind_group, &[]);
+            let (gx, gy) = self.workgroups();
+            pass.dispatch_workgroups(gx, gy, 1);
+        }
+
+        encoder.copy_buffer_to_buffer(
+            &self.color_buffer,
+            0,
+            &self.color_staging,
+            0,
+            self.color_staging.size(),
+        );
+
+        self.queue.submit(std::iter::once(encoder.finish()));
+        self.wait();
+
+        let bytes = self.read_back(&self.color_staging);
+        let colors: &[GpuColor] = bytemuck::cast_slice(&bytes);
+        let out = colors.iter().map(|c| [c.r, c.g, c.b]).collect();
+        self.color_staging.unmap();
+        out
     }
 
     /// Pass B (§6/§7): the clean variant, timed on the GPU timeline.

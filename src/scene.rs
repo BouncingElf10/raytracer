@@ -81,6 +81,14 @@ impl Scene {
     pub fn get_objects(&self) -> &[Box<dyn Hittable>] {
         &self.objects
     }
+
+    /// First mesh in the scene. The studio drives exactly one mesh, so this is
+    /// the object whose BVH gets rebuilt when a heuristic changes.
+    pub fn first_mesh_mut(&mut self) -> Option<&mut Mesh> {
+        self.objects
+            .iter_mut()
+            .find_map(|object| object.as_any_mut().downcast_mut::<Mesh>())
+    }
 }
 
 pub fn triangle_to_gpu_triangle(tri: &Triangle) -> GpuTriangle {
@@ -104,6 +112,11 @@ pub fn triangle_to_gpu_triangle(tri: &Triangle) -> GpuTriangle {
         _padding: [0.0, 0.0],
     }
 }
+
+/// Mesh the interactive scene loads. The studio hands this to the harness when
+/// exporting a figure set, so the exported figures use the same geometry that is
+/// on screen.
+pub const STUDIO_MESH_PATH: &str = "src/models/standford_dragon.obj";
 
 pub fn create_scene() -> Scene {
     profiler_start("create scene");

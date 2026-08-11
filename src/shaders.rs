@@ -12,6 +12,7 @@ const BINDINGS: &str = include_str!("shaders/bindings.wgsl");
 const HIT: &str = include_str!("shaders/hit.wgsl");
 const RANDOM: &str = include_str!("shaders/random.wgsl");
 const PATH: &str = include_str!("shaders/path.wgsl");
+const PALETTE: &str = include_str!("shaders/palette.wgsl");
 const ENTRY: &str = include_str!("shaders/raytracer.wgsl");
 
 /// Which build of the traversal shader to produce.
@@ -32,7 +33,7 @@ impl ShaderVariant {
 
 /// Full WGSL source for the requested variant.
 pub fn compose(variant: ShaderVariant) -> String {
-    let fragments = [TYPES, BINDINGS, RANDOM, HIT, PATH, ENTRY];
+    let fragments = [TYPES, BINDINGS, RANDOM, HIT, PATH, PALETTE, ENTRY];
     let mut out = String::new();
     for fragment in fragments {
         out.push_str(&preprocess(fragment, variant.instrumented()));
