@@ -8,9 +8,9 @@
 /// same config replays the same random sequence on any machine. The interactive
 /// renderer varies `frame_number` per frame to accumulate; the harness holds it
 /// fixed and varies `sample` inside the dispatch instead.
-fn pixel_seed(pixel: vec2<u32>, sample: u32) -> u32 {
+fn pixel_seed(pixel: vec2<u32>, sample_: u32) -> u32 {
     return (pixel.y * 1973u + pixel.x) * 9277u
-         + (counts.frame_number + sample) * 26699u
+         + (counts.frame_number + sample_) * 26699u
          + counts.rng_seed * 7919u;
 }
 
