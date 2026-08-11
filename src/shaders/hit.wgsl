@@ -143,21 +143,72 @@ fn hit_plane(plane: Plane, ray: Ray) -> HitInfo {
     return hit;
 }
 
+
+// ---- BVH traversal ---------------------------------------------------------
+
+// Traversal stack depth. Must exceed the deepest tree under test or counts get
+// truncated -- the harness compares this against the CPU-side max_depth and
+// reports any ray that bailed out via the `incomplete` counter.
+const BVH_STACK_SIZE: u32 = 64u;
+// Hard step guard so a malformed tree cannot hang the GPU. Set far above any
+// legitimate traversal so it never biases the measured counts.
+const BVH_MAX_STEPS: u32 = 65536u;
+
+//#if INSTRUMENTED
+// Per-invocation counters, accumulated across every bounce of every sample and
+// flushed to `ray_counters` once at the end of the entry point.
+var<private> ctr_node_visits: u32 = 0u;
+var<private> ctr_interior_visits: u32 = 0u;
+var<private> ctr_prim_tests: u32 = 0u;
+var<private> ctr_ray_count: u32 = 0u;
+var<private> ctr_incomplete: u32 = 0u;
+//#endif
+
+/// Reciprocal of a direction with no infinities.
+///
+/// The naive `1.0 / direction` produces +/-inf on a zero component, and the slab
+/// test then evaluates `0 * inf = NaN` whenever the ray origin lies exactly on a
+/// slab plane -- exactly what axis-parallel rays through an axis-aligned uniform
+/// grid generate. NaN propagates through min/max unpredictably and would corrupt
+/// both the hit result and the traversal counts.
+///
+/// Clamping the magnitude to a tiny non-zero value keeps every product finite
+/// while preserving the sign, so a ray parallel to a slab still resolves
+/// correctly: outside the slab it yields two same-signed huge values (a miss on
+/// that axis), inside it yields -huge/+huge (no constraint).
+fn safe_inv_dir(direction: vec3<f32>) -> vec3<f32> {
+    let tiny = vec3<f32>(1e-20);
+    let magnitude = max(abs(direction), tiny);
+    let signs = select(vec3<f32>(-1.0), vec3<f32>(1.0), direction >= vec3<f32>(0.0));
+    return signs / magnitude;
+}
+
+/// Returns the entry distance t if hit, or -1.0 on a miss.
 fn intersect_aabb(ray: Ray, aabb_min: vec3<f32>, aabb_max: vec3<f32>) -> f32 {
-    let inv_dir = 1.0 / ray.direction;
+    let inv_dir = safe_inv_dir(ray.direction);
+
+    // Distance along the ray to each slab's two planes, per axis.
     let t0 = (aabb_min - ray.origin) * inv_dir;
     let t1 = (aabb_max - ray.origin) * inv_dir;
 
+    // We cannot assume t0 < t1: when a direction component is negative the ray
+    // reaches the max plane before the min plane, so t0 > t1 on that axis.
     let tmin = min(t0, t1);
     let tmax = max(t0, t1);
 
+    // Box entry = latest of the three slab entries.
+    // Box exit  = earliest of the three slab exits.
     let tmin_max = max(max(tmin.x, tmin.y), tmin.z);
     let tmax_min = min(min(tmax.x, tmax.y), tmax.z);
 
+    // Hit if the box interval is non-empty (entry <= exit) AND lies in front of
+    // the ray. The 0.001 is a near-clip epsilon: it rejects hits extremely
+    // close to the origin so a ray leaving a surface doesn't immediately
+    // re-hit the box it just came from.
     if (tmax_min >= max(0.001, tmin_max)) {
-        return tmin_max;
+        return tmin_max; // entry distance
     }
-    return -1.0;
+    return -1.0; // miss
 }
 
 fn traverse_bvh(ray: Ray) -> HitInfo {
@@ -169,18 +220,22 @@ fn traverse_bvh(ray: Ray) -> HitInfo {
         return closest_hit;
     }
 
-    var stack: array<u32, 24>;
-    var stack_ptr = 0;
+//#if INSTRUMENTED
+    ctr_ray_count += 1u;
+//#endif
+
+    var stack: array<u32, BVH_STACK_SIZE>;
+    var stack_ptr = 0u;
 
     stack[0] = 0u;
-    stack_ptr = 1;
+    stack_ptr = 1u;
 
-    var iterations = 0u;
-    let max_iterations = 1000u;
+    var steps = 0u;
+    var truncated = false;
 
-    while (stack_ptr > 0 && iterations < max_iterations) {
-        iterations += 1u;
-        stack_ptr -= 1;
+    while (stack_ptr > 0u && steps < BVH_MAX_STEPS) {
+        steps += 1u;
+        stack_ptr -= 1u;
 
         let node_idx = stack[stack_ptr];
 
@@ -190,6 +245,15 @@ fn traverse_bvh(ray: Ray) -> HitInfo {
 
         let node = bvh_nodes[node_idx];
 
+//#if INSTRUMENTED
+        // One AABB test per node popped. Counted before the hit/miss branch so
+        // the metric reflects work done, not work that paid off.
+        ctr_node_visits += 1u;
+        if (node.is_leaf != 1u) {
+            ctr_interior_visits += 1u;
+        }
+//#endif
+
         let aabb_t = intersect_aabb(ray, node.min, node.max);
         if (aabb_t < 0.0 || aabb_t > closest_t) {
             continue;
@@ -198,9 +262,8 @@ fn traverse_bvh(ray: Ray) -> HitInfo {
         if (node.is_leaf == 1u) {
             let first_tri = node.left_first;
             let tri_count = node.right_count;
-            let safe_tri_count = min(tri_count, 100u);
 
-            for (var i = 0u; i < safe_tri_count; i++) {
+            for (var i = 0u; i < tri_count; i++) {
                 let idx_offset = first_tri + i;
 
                 if (idx_offset >= counts.bvh_index_count) {
@@ -212,6 +275,10 @@ fn traverse_bvh(ray: Ray) -> HitInfo {
                     continue;
                 }
 
+//#if INSTRUMENTED
+                ctr_prim_tests += 1u;
+//#endif
+
                 let hit = hit_triangle(triangles[tri_idx], ray);
                 if (hit.has_hit != 0u && hit.t < closest_t) {
                     closest_t = hit.t;
@@ -221,20 +288,30 @@ fn traverse_bvh(ray: Ray) -> HitInfo {
         } else {
             let left_child = node.left_first;
             let right_child = node.right_count;
-            if (stack_ptr < 22) {
+
+            // Push right first so left is popped first (rough front-to-back for
+            // a left-leaning build). Two slots are needed; if only one is free
+            // the traversal would silently drop a subtree, so flag it instead.
+            if (stack_ptr + 2u > BVH_STACK_SIZE) {
+                truncated = true;
+            } else {
                 if (right_child < counts.bvh_node_count) {
                     stack[stack_ptr] = right_child;
-                    stack_ptr += 1;
+                    stack_ptr += 1u;
                 }
-            }
-            if (stack_ptr < 22) {
                 if (left_child < counts.bvh_node_count) {
                     stack[stack_ptr] = left_child;
-                    stack_ptr += 1;
+                    stack_ptr += 1u;
                 }
             }
         }
     }
+
+//#if INSTRUMENTED
+    if (truncated || steps >= BVH_MAX_STEPS) {
+        ctr_incomplete += 1u;
+    }
+//#endif
 
     return closest_hit;
 }

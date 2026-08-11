@@ -18,11 +18,20 @@ mod gpu_types;
 mod compute;
 mod profiler;
 mod bvh;
+mod shaders;
+mod gpu_harness;
+mod experiment;
 
 const DEBUG_MODE: bool = true;
 
 #[tokio::main]
 async fn main() {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.first().is_some_and(|a| a == "harness") {
+        run_harness(&args[1..]);
+        return;
+    }
+
     profiler::profiler_start("init");
     profiler::profiler_start("window");
     let mut canvas = Canvas::new(80 * 10, 60 * 10, "WINDOW").await;
@@ -76,5 +85,23 @@ async fn main() {
 
         profiler::profiler_stop("main");
         profiler::profiler_reset()
+    }
+}
+
+/// Runs the BVH data-collection harness instead of opening the interactive
+/// window. Exits non-zero on a bad flag or an I/O failure so it can be driven
+/// from a script.
+fn run_harness(args: &[String]) {
+    let config = match experiment::parse_args(args) {
+        Ok(config) => config,
+        Err(message) => {
+            eprintln!("{message}");
+            std::process::exit(2);
+        }
+    };
+
+    if let Err(error) = experiment::run(&config) {
+        eprintln!("harness failed: {error}");
+        std::process::exit(1);
     }
 }

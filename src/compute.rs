@@ -1,32 +1,15 @@
 use crate::bvh::flatten_bvh_for_gpu;
-use crate::gpu_types::{GpuBVHNode, GpuColor, GpuPlane, GpuRay, GpuSphere, GpuTriangle};
+use crate::gpu_types::{Counts, GpuBVHNode, GpuColor, GpuPlane, GpuRay, GpuSphere, GpuTriangle};
 use crate::model::Mesh;
 use crate::scene::Scene;
+use crate::shaders::{self, ShaderVariant};
 use crate::window::Canvas;
-use bytemuck::{Pod, Zeroable};
 use wgpu::util::DeviceExt;
 
-#[repr(C)]
-#[derive(Copy, Clone, Pod, Zeroable)]
-struct Counts {
-    sphere_count: u32,
-    triangle_count: u32,
-    plane_count: u32,
-    width: u32,
-    height: u32,
-    frame_number: u32,
-    bvh_node_count: u32,
-    bvh_index_count: u32,
-}
-
 pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
-    let shader_source = format!(
-        "{}\n{}\n{}\n{}",
-        include_str!("shaders/types.wgsl"),
-        include_str!("shaders/hit.wgsl"),
-        include_str!("shaders/random.wgsl"),
-        include_str!("shaders/raytracer.wgsl"),
-    );
+    // The interactive renderer always uses the clean variant: it never collects
+    // counters, and instrumentation would only cost it frame rate.
+    let shader_source = shaders::compose(ShaderVariant::Clean);
 
     let shader = canvas.device().create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("Raytrace Compute Shader"),
@@ -45,6 +28,11 @@ pub fn setup_compute_pipeline(canvas: &mut Canvas, scene: &Scene) {
         frame_number: canvas.sample_count,
         bvh_node_count: bvh_nodes.len() as u32,
         bvh_index_count: bvh_indices.len() as u32,
+        // One sample per dispatch; the interactive path accumulates across frames.
+        samples: 1,
+        rng_seed: 0,
+        _pad0: 0,
+        _pad1: 0,
     };
 
     println!("Creating counts buffer:");

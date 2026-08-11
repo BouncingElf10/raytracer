@@ -76,6 +76,43 @@ pub struct GpuColor {
     pub _pad: f32,
 }
 
+/// Mirrors `Counts` in `shaders/types.wgsl`. Uploaded as a uniform buffer, so the
+/// size must stay a multiple of 16 bytes -- hence the trailing padding.
+///
+/// `renderer.rs` patches `frame_number` in place at byte offset 20; keep the
+/// field order stable if you add anything.
+#[repr(C)]
+#[derive(Copy, Clone, Pod, Zeroable)]
+pub struct Counts {
+    pub sphere_count: u32,
+    pub triangle_count: u32,
+    pub plane_count: u32,
+    pub width: u32,
+    pub height: u32,
+    pub frame_number: u32,
+    pub bvh_node_count: u32,
+    pub bvh_index_count: u32,
+    pub samples: u32,
+    pub rng_seed: u32,
+    pub _pad0: u32,
+    pub _pad1: u32,
+}
+
+/// Mirrors `RayCounters` in `shaders/types.wgsl`: one record per pixel, written
+/// only by the instrumented shader variant.
+#[repr(C)]
+#[derive(Copy, Clone, Default, Pod, Zeroable)]
+pub struct GpuRayCounters {
+    pub node_visits: u32,
+    pub prim_tests: u32,
+    pub ray_count: u32,
+    pub interior_visits: u32,
+    pub incomplete: u32,
+    pub _pad0: u32,
+    pub _pad1: u32,
+    pub _pad2: u32,
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, Pod, Zeroable)]
 pub struct GpuBVHNode {

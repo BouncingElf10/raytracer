@@ -81,6 +81,7 @@ impl Plane {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct Triangle {
     v0: Vec3,
     v1: Vec3,
