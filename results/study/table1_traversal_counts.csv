@@ -1,0 +1,33 @@
+set,scene,prim_count,heuristic,node_visits_per_ray,prim_tests_per_ray,interior_visits_per_ray
+A,Icosphere,150000,LongestAxisCentroid,24.6374,19.6518,22.2335
+A,Icosphere,150000,Median,24.4502,24.5859,21.9761
+A,Icosphere,150000,Sah,23.2179,14.7896,21.2496
+A,Icosphere,150000,Random,46.7148,30.0366,39.8003
+A,Utah Teapot,150000,LongestAxisCentroid,10.0371,8.4738,9.0464
+A,Utah Teapot,150000,Median,10.1230,10.8830,9.1318
+A,Utah Teapot,150000,Sah,8.1204,5.9338,7.3718
+A,Utah Teapot,150000,Random,22.3997,21.8253,17.9597
+A,Coral,150000,LongestAxisCentroid,14.7730,10.2311,13.4255
+A,Coral,150000,Median,15.7371,15.3883,14.1488
+A,Coral,150000,Sah,12.6060,8.4180,11.4671
+A,Coral,150000,Random,35.0126,32.4734,28.1222
+B,Stanford Dragon 10k,10000,LongestAxisCentroid,7.5016,8.0550,6.4605
+B,Stanford Dragon 10k,10000,Median,7.2228,11.6454,6.1497
+B,Stanford Dragon 10k,10000,Sah,6.4592,6.2432,5.6310
+B,Stanford Dragon 10k,10000,Random,16.5240,23.1946,12.2935
+B,Stanford Dragon 50k,50000,LongestAxisCentroid,9.0818,7.9671,8.0576
+B,Stanford Dragon 50k,50000,Median,9.9796,7.7156,8.8021
+B,Stanford Dragon 50k,50000,Sah,7.9487,6.2532,7.1099
+B,Stanford Dragon 50k,50000,Random,22.8416,26.1044,17.7454
+B,Stanford Dragon 150k,150000,LongestAxisCentroid,10.1727,7.6324,9.1804
+B,Stanford Dragon 150k,150000,Median,10.5635,10.9212,9.4434
+B,Stanford Dragon 150k,150000,Sah,8.9769,6.0693,8.1494
+B,Stanford Dragon 150k,150000,Random,32.2121,32.9900,25.2509
+B,Stanford Dragon 400k,400000,LongestAxisCentroid,11.0884,7.5518,10.1185
+B,Stanford Dragon 400k,400000,Median,12.4269,7.3575,11.2946
+B,Stanford Dragon 400k,400000,Sah,9.8156,6.0047,9.0026
+B,Stanford Dragon 400k,400000,Random,40.4780,36.9895,32.3097
+B,Stanford Dragon 1000k,1000000,LongestAxisCentroid,11.9129,7.3270,10.9715
+B,Stanford Dragon 1000k,1000000,Median,12.9424,8.6754,11.8724
+B,Stanford Dragon 1000k,1000000,Sah,10.6307,5.9460,9.8283
+B,Stanford Dragon 1000k,1000000,Random,35.9093,29.2511,29.4489
