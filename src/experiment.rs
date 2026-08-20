@@ -262,14 +262,18 @@ fn collect_record(
         &flattened.indices,
         config.samples,
         config.rng_seed,
+        // The path depth this harness has always used. The study driver makes it
+        // a declared control instead; this one keeps its historical value so old
+        // CSVs stay comparable.
+        10,
     );
 
     // Pass A: counts only.
     let want_figures = config.figures_dir.is_some();
-    let (counters, records) = harness.collect_counters(&upload, want_figures);
+    let (counters, records) = harness.collect_counters(upload.bvh(), want_figures);
 
     if config.verify_determinism {
-        let (repeat, _) = harness.collect_counters(&upload, false);
+        let (repeat, _) = harness.collect_counters(upload.bvh(), false);
         let identical = repeat.total_node_visits == counters.total_node_visits
             && repeat.total_prim_tests == counters.total_prim_tests
             && repeat.total_rays == counters.total_rays;
@@ -280,14 +284,14 @@ fn collect_record(
     }
 
     // Pass B: wall-clock only, same camera/resolution/samples/seed.
-    let timing = harness.measure_render_time(&upload, config.warmup_runs, config.timed_runs);
+    let timing = harness.measure_render_time(upload.bvh(), config.warmup_runs, config.timed_runs);
 
     // The colour capture is deliberately last: it is an extra dispatch that must
     // not sit between the timed runs.
     let figure_input = records.map(|records| figures::FigureInput {
         heuristic: heuristic.name().to_string(),
         records,
-        colors: harness.capture_color(&upload),
+        colors: harness.capture_color(upload.bvh()),
         tree,
         node_visits_per_ray: counters.node_visits_per_ray,
         prim_tests_per_ray: counters.prim_tests_per_ray,

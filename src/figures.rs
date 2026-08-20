@@ -119,7 +119,7 @@ pub fn render_scene_figures(
             2,
             &format!("{scene} - {}", metric.title),
             &format!(
-                "shared colour scale, 0 to {}   |   brighter = more work",
+                "shared colour scale, 0 to {}   |   darker = more work",
                 viz::format_number(scale.max)
             ),
         );

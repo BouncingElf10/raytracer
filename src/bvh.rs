@@ -692,3 +692,17 @@ fn flatten_node(
 
     node_index
 }
+
+/// Every node's box at exactly `depth`, plus whether that node is a leaf.
+///
+/// Collected before the tree is dropped so the structure figures can be drawn
+/// without keeping a whole scene's worth of trees alive at once.
+pub fn aabbs_at_depth(root: &BVHNode, depth: usize) -> Vec<(AABB, bool)> {
+    let mut boxes = Vec::new();
+    traverse_nodes_with_depth(root, &mut |visit| {
+        if visit.depth == depth {
+            boxes.push((*visit.aabb, visit.is_leaf));
+        }
+    });
+    boxes
+}

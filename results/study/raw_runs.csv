@@ -1,0 +1,641 @@
+set,scene,scene_key,prim_count,heuristic,seed,measurement,run,value_ms
+A,Icosphere,icosphere,150000,LongestAxisCentroid,-,build,1,44.978900
+A,Icosphere,icosphere,150000,LongestAxisCentroid,-,build,2,49.781400
+A,Icosphere,icosphere,150000,LongestAxisCentroid,-,build,3,46.246400
+A,Icosphere,icosphere,150000,LongestAxisCentroid,-,build,4,45.663200
+A,Icosphere,icosphere,150000,LongestAxisCentroid,-,build,5,46.374300
+A,Icosphere,icosphere,150000,LongestAxisCentroid,-,render,1,1544.215120
+A,Icosphere,icosphere,150000,LongestAxisCentroid,-,render,2,1549.960240
+A,Icosphere,icosphere,150000,LongestAxisCentroid,-,render,3,1549.288200
+A,Icosphere,icosphere,150000,LongestAxisCentroid,-,render,4,1542.134680
+A,Icosphere,icosphere,150000,LongestAxisCentroid,-,render,5,1540.741600
+A,Icosphere,icosphere,150000,Median,-,build,1,107.305300
+A,Icosphere,icosphere,150000,Median,-,build,2,108.767500
+A,Icosphere,icosphere,150000,Median,-,build,3,106.585900
+A,Icosphere,icosphere,150000,Median,-,build,4,105.879800
+A,Icosphere,icosphere,150000,Median,-,build,5,105.519700
+A,Icosphere,icosphere,150000,Median,-,render,1,916.222920
+A,Icosphere,icosphere,150000,Median,-,render,2,925.597040
+A,Icosphere,icosphere,150000,Median,-,render,3,915.167800
+A,Icosphere,icosphere,150000,Median,-,render,4,917.207360
+A,Icosphere,icosphere,150000,Median,-,render,5,915.268200
+A,Icosphere,icosphere,150000,Sah,-,build,1,347.712700
+A,Icosphere,icosphere,150000,Sah,-,build,2,344.607300
+A,Icosphere,icosphere,150000,Sah,-,build,3,348.365600
+A,Icosphere,icosphere,150000,Sah,-,build,4,347.318100
+A,Icosphere,icosphere,150000,Sah,-,build,5,346.730000
+A,Icosphere,icosphere,150000,Sah,-,render,1,919.501360
+A,Icosphere,icosphere,150000,Sah,-,render,2,1015.396360
+A,Icosphere,icosphere,150000,Sah,-,render,3,1010.702040
+A,Icosphere,icosphere,150000,Sah,-,render,4,1014.803160
+A,Icosphere,icosphere,150000,Sah,-,render,5,1017.297480
+A,Icosphere,icosphere,150000,Random,1,build,1,56.622200
+A,Icosphere,icosphere,150000,Random,1,build,2,58.160800
+A,Icosphere,icosphere,150000,Random,1,build,3,57.834200
+A,Icosphere,icosphere,150000,Random,1,build,4,56.009600
+A,Icosphere,icosphere,150000,Random,1,build,5,57.335400
+A,Icosphere,icosphere,150000,Random,1,render,1,741.645520
+A,Icosphere,icosphere,150000,Random,1,render,2,1010.297320
+A,Icosphere,icosphere,150000,Random,1,render,3,750.618280
+A,Icosphere,icosphere,150000,Random,1,render,4,744.682480
+A,Icosphere,icosphere,150000,Random,1,render,5,748.022120
+A,Icosphere,icosphere,150000,Random,2,build,1,53.570000
+A,Icosphere,icosphere,150000,Random,2,build,2,54.766600
+A,Icosphere,icosphere,150000,Random,2,build,3,53.958800
+A,Icosphere,icosphere,150000,Random,2,build,4,53.394700
+A,Icosphere,icosphere,150000,Random,2,build,5,54.384600
+A,Icosphere,icosphere,150000,Random,2,render,1,1553.441400
+A,Icosphere,icosphere,150000,Random,2,render,2,1551.874680
+A,Icosphere,icosphere,150000,Random,2,render,3,747.217640
+A,Icosphere,icosphere,150000,Random,2,render,4,1556.471240
+A,Icosphere,icosphere,150000,Random,2,render,5,1554.551080
+A,Icosphere,icosphere,150000,Random,3,build,1,55.629000
+A,Icosphere,icosphere,150000,Random,3,build,2,57.949000
+A,Icosphere,icosphere,150000,Random,3,build,3,55.811800
+A,Icosphere,icosphere,150000,Random,3,build,4,56.792100
+A,Icosphere,icosphere,150000,Random,3,build,5,56.191000
+A,Icosphere,icosphere,150000,Random,3,render,1,1721.190960
+A,Icosphere,icosphere,150000,Random,3,render,2,1724.400120
+A,Icosphere,icosphere,150000,Random,3,render,3,1734.155200
+A,Icosphere,icosphere,150000,Random,3,render,4,1557.004160
+A,Icosphere,icosphere,150000,Random,3,render,5,1732.610120
+A,Icosphere,icosphere,150000,Random,4,build,1,53.577800
+A,Icosphere,icosphere,150000,Random,4,build,2,54.594500
+A,Icosphere,icosphere,150000,Random,4,build,3,53.224700
+A,Icosphere,icosphere,150000,Random,4,build,4,54.225100
+A,Icosphere,icosphere,150000,Random,4,build,5,55.918200
+A,Icosphere,icosphere,150000,Random,4,render,1,1487.086240
+A,Icosphere,icosphere,150000,Random,4,render,2,1479.719520
+A,Icosphere,icosphere,150000,Random,4,render,3,1494.118560
+A,Icosphere,icosphere,150000,Random,4,render,4,1484.244240
+A,Icosphere,icosphere,150000,Random,4,render,5,1727.956120
+A,Icosphere,icosphere,150000,Random,5,build,1,51.151500
+A,Icosphere,icosphere,150000,Random,5,build,2,53.126900
+A,Icosphere,icosphere,150000,Random,5,build,3,52.698700
+A,Icosphere,icosphere,150000,Random,5,build,4,52.124700
+A,Icosphere,icosphere,150000,Random,5,build,5,51.550600
+A,Icosphere,icosphere,150000,Random,5,render,1,1541.283280
+A,Icosphere,icosphere,150000,Random,5,render,2,1536.503400
+A,Icosphere,icosphere,150000,Random,5,render,3,1546.809960
+A,Icosphere,icosphere,150000,Random,5,render,4,1555.913400
+A,Icosphere,icosphere,150000,Random,5,render,5,1526.472720
+A,Utah Teapot,utah_teapot,150000,LongestAxisCentroid,-,build,1,47.587200
+A,Utah Teapot,utah_teapot,150000,LongestAxisCentroid,-,build,2,42.636300
+A,Utah Teapot,utah_teapot,150000,LongestAxisCentroid,-,build,3,47.662600
+A,Utah Teapot,utah_teapot,150000,LongestAxisCentroid,-,build,4,44.738200
+A,Utah Teapot,utah_teapot,150000,LongestAxisCentroid,-,build,5,42.522700
+A,Utah Teapot,utah_teapot,150000,LongestAxisCentroid,-,render,1,1843.157360
+A,Utah Teapot,utah_teapot,150000,LongestAxisCentroid,-,render,2,1851.578600
+A,Utah Teapot,utah_teapot,150000,LongestAxisCentroid,-,render,3,1842.471720
+A,Utah Teapot,utah_teapot,150000,LongestAxisCentroid,-,render,4,1848.633080
+A,Utah Teapot,utah_teapot,150000,LongestAxisCentroid,-,render,5,1862.281520
+A,Utah Teapot,utah_teapot,150000,Median,-,build,1,114.367400
+A,Utah Teapot,utah_teapot,150000,Median,-,build,2,113.412500
+A,Utah Teapot,utah_teapot,150000,Median,-,build,3,107.979100
+A,Utah Teapot,utah_teapot,150000,Median,-,build,4,107.872600
+A,Utah Teapot,utah_teapot,150000,Median,-,build,5,112.043000
+A,Utah Teapot,utah_teapot,150000,Median,-,render,1,712.938200
+A,Utah Teapot,utah_teapot,150000,Median,-,render,2,711.840680
+A,Utah Teapot,utah_teapot,150000,Median,-,render,3,714.795040
+A,Utah Teapot,utah_teapot,150000,Median,-,render,4,714.751760
+A,Utah Teapot,utah_teapot,150000,Median,-,render,5,711.938560
+A,Utah Teapot,utah_teapot,150000,Sah,-,build,1,389.039500
+A,Utah Teapot,utah_teapot,150000,Sah,-,build,2,385.414300
+A,Utah Teapot,utah_teapot,150000,Sah,-,build,3,386.713600
+A,Utah Teapot,utah_teapot,150000,Sah,-,build,4,392.011300
+A,Utah Teapot,utah_teapot,150000,Sah,-,build,5,391.079300
+A,Utah Teapot,utah_teapot,150000,Sah,-,render,1,712.378480
+A,Utah Teapot,utah_teapot,150000,Sah,-,render,2,826.043800
+A,Utah Teapot,utah_teapot,150000,Sah,-,render,3,828.918720
+A,Utah Teapot,utah_teapot,150000,Sah,-,render,4,832.692400
+A,Utah Teapot,utah_teapot,150000,Sah,-,render,5,826.585160
+A,Utah Teapot,utah_teapot,150000,Random,1,build,1,58.666100
+A,Utah Teapot,utah_teapot,150000,Random,1,build,2,60.416400
+A,Utah Teapot,utah_teapot,150000,Random,1,build,3,58.789400
+A,Utah Teapot,utah_teapot,150000,Random,1,build,4,58.965300
+A,Utah Teapot,utah_teapot,150000,Random,1,build,5,58.489900
+A,Utah Teapot,utah_teapot,150000,Random,1,render,1,571.407240
+A,Utah Teapot,utah_teapot,150000,Random,1,render,2,822.719000
+A,Utah Teapot,utah_teapot,150000,Random,1,render,3,574.838520
+A,Utah Teapot,utah_teapot,150000,Random,1,render,4,574.162920
+A,Utah Teapot,utah_teapot,150000,Random,1,render,5,573.231920
+A,Utah Teapot,utah_teapot,150000,Random,2,build,1,55.737800
+A,Utah Teapot,utah_teapot,150000,Random,2,build,2,51.402200
+A,Utah Teapot,utah_teapot,150000,Random,2,build,3,58.134700
+A,Utah Teapot,utah_teapot,150000,Random,2,build,4,55.496400
+A,Utah Teapot,utah_teapot,150000,Random,2,build,5,55.321400
+A,Utah Teapot,utah_teapot,150000,Random,2,render,1,1537.570760
+A,Utah Teapot,utah_teapot,150000,Random,2,render,2,1543.905200
+A,Utah Teapot,utah_teapot,150000,Random,2,render,3,573.090280
+A,Utah Teapot,utah_teapot,150000,Random,2,render,4,1551.168640
+A,Utah Teapot,utah_teapot,150000,Random,2,render,5,1545.017000
+A,Utah Teapot,utah_teapot,150000,Random,3,build,1,54.348800
+A,Utah Teapot,utah_teapot,150000,Random,3,build,2,55.169400
+A,Utah Teapot,utah_teapot,150000,Random,3,build,3,59.520300
+A,Utah Teapot,utah_teapot,150000,Random,3,build,4,57.208900
+A,Utah Teapot,utah_teapot,150000,Random,3,build,5,48.993400
+A,Utah Teapot,utah_teapot,150000,Random,3,render,1,1669.172120
+A,Utah Teapot,utah_teapot,150000,Random,3,render,2,1667.857080
+A,Utah Teapot,utah_teapot,150000,Random,3,render,3,1670.512320
+A,Utah Teapot,utah_teapot,150000,Random,3,render,4,1533.034520
+A,Utah Teapot,utah_teapot,150000,Random,3,render,5,1670.017760
+A,Utah Teapot,utah_teapot,150000,Random,4,build,1,55.278100
+A,Utah Teapot,utah_teapot,150000,Random,4,build,2,55.910700
+A,Utah Teapot,utah_teapot,150000,Random,4,build,3,55.177400
+A,Utah Teapot,utah_teapot,150000,Random,4,build,4,56.270300
+A,Utah Teapot,utah_teapot,150000,Random,4,build,5,51.184300
+A,Utah Teapot,utah_teapot,150000,Random,4,render,1,1790.343560
+A,Utah Teapot,utah_teapot,150000,Random,4,render,2,1780.303320
+A,Utah Teapot,utah_teapot,150000,Random,4,render,3,1786.942920
+A,Utah Teapot,utah_teapot,150000,Random,4,render,4,1781.430920
+A,Utah Teapot,utah_teapot,150000,Random,4,render,5,1670.678960
+A,Utah Teapot,utah_teapot,150000,Random,5,build,1,55.846800
+A,Utah Teapot,utah_teapot,150000,Random,5,build,2,54.785600
+A,Utah Teapot,utah_teapot,150000,Random,5,build,3,50.434900
+A,Utah Teapot,utah_teapot,150000,Random,5,build,4,51.063700
+A,Utah Teapot,utah_teapot,150000,Random,5,build,5,56.612700
+A,Utah Teapot,utah_teapot,150000,Random,5,render,1,1656.239080
+A,Utah Teapot,utah_teapot,150000,Random,5,render,2,1652.773920
+A,Utah Teapot,utah_teapot,150000,Random,5,render,3,1650.645640
+A,Utah Teapot,utah_teapot,150000,Random,5,render,4,1644.029960
+A,Utah Teapot,utah_teapot,150000,Random,5,render,5,1664.860400
+A,Coral,coral,150000,LongestAxisCentroid,-,build,1,42.460100
+A,Coral,coral,150000,LongestAxisCentroid,-,build,2,46.773500
+A,Coral,coral,150000,LongestAxisCentroid,-,build,3,41.813900
+A,Coral,coral,150000,LongestAxisCentroid,-,build,4,42.726500
+A,Coral,coral,150000,LongestAxisCentroid,-,build,5,41.844900
+A,Coral,coral,150000,LongestAxisCentroid,-,render,1,2539.367360
+A,Coral,coral,150000,LongestAxisCentroid,-,render,2,2544.280680
+A,Coral,coral,150000,LongestAxisCentroid,-,render,3,2539.197600
+A,Coral,coral,150000,LongestAxisCentroid,-,render,4,2542.600160
+A,Coral,coral,150000,LongestAxisCentroid,-,render,5,2543.929560
+A,Coral,coral,150000,Median,-,build,1,114.576600
+A,Coral,coral,150000,Median,-,build,2,113.842800
+A,Coral,coral,150000,Median,-,build,3,120.020100
+A,Coral,coral,150000,Median,-,build,4,114.793000
+A,Coral,coral,150000,Median,-,build,5,113.799400
+A,Coral,coral,150000,Median,-,render,1,823.299680
+A,Coral,coral,150000,Median,-,render,2,817.049560
+A,Coral,coral,150000,Median,-,render,3,828.736680
+A,Coral,coral,150000,Median,-,render,4,818.416880
+A,Coral,coral,150000,Median,-,render,5,826.213960
+A,Coral,coral,150000,Sah,-,build,1,399.525400
+A,Coral,coral,150000,Sah,-,build,2,395.847000
+A,Coral,coral,150000,Sah,-,build,3,393.773900
+A,Coral,coral,150000,Sah,-,build,4,393.938700
+A,Coral,coral,150000,Sah,-,build,5,395.374100
+A,Coral,coral,150000,Sah,-,render,1,821.742320
+A,Coral,coral,150000,Sah,-,render,2,1058.909320
+A,Coral,coral,150000,Sah,-,render,3,1050.211640
+A,Coral,coral,150000,Sah,-,render,4,1057.581920
+A,Coral,coral,150000,Sah,-,render,5,1054.516640
+A,Coral,coral,150000,Random,1,build,1,56.474800
+A,Coral,coral,150000,Random,1,build,2,52.833000
+A,Coral,coral,150000,Random,1,build,3,56.457300
+A,Coral,coral,150000,Random,1,build,4,57.751700
+A,Coral,coral,150000,Random,1,build,5,57.437300
+A,Coral,coral,150000,Random,1,render,1,691.559320
+A,Coral,coral,150000,Random,1,render,2,1058.338400
+A,Coral,coral,150000,Random,1,render,3,691.341080
+A,Coral,coral,150000,Random,1,render,4,692.898200
+A,Coral,coral,150000,Random,1,render,5,694.058560
+A,Coral,coral,150000,Random,2,build,1,55.868000
+A,Coral,coral,150000,Random,2,build,2,66.573800
+A,Coral,coral,150000,Random,2,build,3,63.700700
+A,Coral,coral,150000,Random,2,build,4,56.312000
+A,Coral,coral,150000,Random,2,build,5,56.871500
+A,Coral,coral,150000,Random,2,render,1,2315.137880
+A,Coral,coral,150000,Random,2,render,2,2319.507640
+A,Coral,coral,150000,Random,2,render,3,688.282000
+A,Coral,coral,150000,Random,2,render,4,2311.007120
+A,Coral,coral,150000,Random,2,render,5,2311.807200
+A,Coral,coral,150000,Random,3,build,1,55.103600
+A,Coral,coral,150000,Random,3,build,2,54.809700
+A,Coral,coral,150000,Random,3,build,3,61.485000
+A,Coral,coral,150000,Random,3,build,4,62.040800
+A,Coral,coral,150000,Random,3,build,5,54.747000
+A,Coral,coral,150000,Random,3,render,1,3087.532920
+A,Coral,coral,150000,Random,3,render,2,3077.371360
+A,Coral,coral,150000,Random,3,render,3,3092.175160
+A,Coral,coral,150000,Random,3,render,4,2312.561240
+A,Coral,coral,150000,Random,3,render,5,3066.697000
+A,Coral,coral,150000,Random,4,build,1,59.026400
+A,Coral,coral,150000,Random,4,build,2,58.709200
+A,Coral,coral,150000,Random,4,build,3,60.286200
+A,Coral,coral,150000,Random,4,build,4,59.793300
+A,Coral,coral,150000,Random,4,build,5,65.166800
+A,Coral,coral,150000,Random,4,render,1,3257.860760
+A,Coral,coral,150000,Random,4,render,2,3256.047640
+A,Coral,coral,150000,Random,4,render,3,3245.901080
+A,Coral,coral,150000,Random,4,render,4,3256.703520
+A,Coral,coral,150000,Random,4,render,5,3084.404080
+A,Coral,coral,150000,Random,5,build,1,56.977900
+A,Coral,coral,150000,Random,5,build,2,50.570900
+A,Coral,coral,150000,Random,5,build,3,50.333200
+A,Coral,coral,150000,Random,5,build,4,51.179500
+A,Coral,coral,150000,Random,5,build,5,51.725300
+A,Coral,coral,150000,Random,5,render,1,2036.624760
+A,Coral,coral,150000,Random,5,render,2,2032.500960
+A,Coral,coral,150000,Random,5,render,3,2048.524840
+A,Coral,coral,150000,Random,5,render,4,2041.326000
+A,Coral,coral,150000,Random,5,render,5,2027.633720
+B,Stanford Dragon,dragon_10k,10000,LongestAxisCentroid,-,build,1,2.036900
+B,Stanford Dragon,dragon_10k,10000,LongestAxisCentroid,-,build,2,2.046500
+B,Stanford Dragon,dragon_10k,10000,LongestAxisCentroid,-,build,3,2.106900
+B,Stanford Dragon,dragon_10k,10000,LongestAxisCentroid,-,build,4,2.096500
+B,Stanford Dragon,dragon_10k,10000,LongestAxisCentroid,-,build,5,2.061000
+B,Stanford Dragon,dragon_10k,10000,LongestAxisCentroid,-,render,1,1177.957480
+B,Stanford Dragon,dragon_10k,10000,LongestAxisCentroid,-,render,2,1176.434080
+B,Stanford Dragon,dragon_10k,10000,LongestAxisCentroid,-,render,3,1177.434960
+B,Stanford Dragon,dragon_10k,10000,LongestAxisCentroid,-,render,4,1180.114120
+B,Stanford Dragon,dragon_10k,10000,LongestAxisCentroid,-,render,5,1179.415240
+B,Stanford Dragon,dragon_10k,10000,Median,-,build,1,4.372200
+B,Stanford Dragon,dragon_10k,10000,Median,-,build,2,4.429900
+B,Stanford Dragon,dragon_10k,10000,Median,-,build,3,5.623700
+B,Stanford Dragon,dragon_10k,10000,Median,-,build,4,4.434100
+B,Stanford Dragon,dragon_10k,10000,Median,-,build,5,4.423800
+B,Stanford Dragon,dragon_10k,10000,Median,-,render,1,520.252760
+B,Stanford Dragon,dragon_10k,10000,Median,-,render,2,519.597160
+B,Stanford Dragon,dragon_10k,10000,Median,-,render,3,523.745800
+B,Stanford Dragon,dragon_10k,10000,Median,-,render,4,519.561840
+B,Stanford Dragon,dragon_10k,10000,Median,-,render,5,519.472520
+B,Stanford Dragon,dragon_10k,10000,Sah,-,build,1,15.194200
+B,Stanford Dragon,dragon_10k,10000,Sah,-,build,2,15.008100
+B,Stanford Dragon,dragon_10k,10000,Sah,-,build,3,15.585000
+B,Stanford Dragon,dragon_10k,10000,Sah,-,build,4,14.674000
+B,Stanford Dragon,dragon_10k,10000,Sah,-,build,5,14.620700
+B,Stanford Dragon,dragon_10k,10000,Sah,-,render,1,519.198680
+B,Stanford Dragon,dragon_10k,10000,Sah,-,render,2,652.470800
+B,Stanford Dragon,dragon_10k,10000,Sah,-,render,3,652.365960
+B,Stanford Dragon,dragon_10k,10000,Sah,-,render,4,652.184560
+B,Stanford Dragon,dragon_10k,10000,Sah,-,render,5,658.168760
+B,Stanford Dragon,dragon_10k,10000,Random,1,build,1,2.332800
+B,Stanford Dragon,dragon_10k,10000,Random,1,build,2,2.836600
+B,Stanford Dragon,dragon_10k,10000,Random,1,build,3,2.340700
+B,Stanford Dragon,dragon_10k,10000,Random,1,build,4,2.355000
+B,Stanford Dragon,dragon_10k,10000,Random,1,build,5,2.310200
+B,Stanford Dragon,dragon_10k,10000,Random,1,render,1,424.931800
+B,Stanford Dragon,dragon_10k,10000,Random,1,render,2,655.265920
+B,Stanford Dragon,dragon_10k,10000,Random,1,render,3,426.303600
+B,Stanford Dragon,dragon_10k,10000,Random,1,render,4,426.576200
+B,Stanford Dragon,dragon_10k,10000,Random,1,render,5,422.620080
+B,Stanford Dragon,dragon_10k,10000,Random,2,build,1,2.431500
+B,Stanford Dragon,dragon_10k,10000,Random,2,build,2,2.504300
+B,Stanford Dragon,dragon_10k,10000,Random,2,build,3,2.832100
+B,Stanford Dragon,dragon_10k,10000,Random,2,build,4,2.386400
+B,Stanford Dragon,dragon_10k,10000,Random,2,build,5,2.347900
+B,Stanford Dragon,dragon_10k,10000,Random,2,render,1,1082.605040
+B,Stanford Dragon,dragon_10k,10000,Random,2,render,2,1084.384800
+B,Stanford Dragon,dragon_10k,10000,Random,2,render,3,426.746040
+B,Stanford Dragon,dragon_10k,10000,Random,2,render,4,1078.010880
+B,Stanford Dragon,dragon_10k,10000,Random,2,render,5,1087.064880
+B,Stanford Dragon,dragon_10k,10000,Random,3,build,1,2.393100
+B,Stanford Dragon,dragon_10k,10000,Random,3,build,2,2.393400
+B,Stanford Dragon,dragon_10k,10000,Random,3,build,3,2.447300
+B,Stanford Dragon,dragon_10k,10000,Random,3,build,4,2.821200
+B,Stanford Dragon,dragon_10k,10000,Random,3,build,5,2.355700
+B,Stanford Dragon,dragon_10k,10000,Random,3,render,1,1208.448360
+B,Stanford Dragon,dragon_10k,10000,Random,3,render,2,1203.017600
+B,Stanford Dragon,dragon_10k,10000,Random,3,render,3,1205.935320
+B,Stanford Dragon,dragon_10k,10000,Random,3,render,4,1081.122200
+B,Stanford Dragon,dragon_10k,10000,Random,3,render,5,1205.428080
+B,Stanford Dragon,dragon_10k,10000,Random,4,build,1,2.341000
+B,Stanford Dragon,dragon_10k,10000,Random,4,build,2,2.348600
+B,Stanford Dragon,dragon_10k,10000,Random,4,build,3,2.411400
+B,Stanford Dragon,dragon_10k,10000,Random,4,build,4,2.403600
+B,Stanford Dragon,dragon_10k,10000,Random,4,build,5,2.698000
+B,Stanford Dragon,dragon_10k,10000,Random,4,render,1,1182.553600
+B,Stanford Dragon,dragon_10k,10000,Random,4,render,2,1191.269040
+B,Stanford Dragon,dragon_10k,10000,Random,4,render,3,1179.166080
+B,Stanford Dragon,dragon_10k,10000,Random,4,render,4,1195.181400
+B,Stanford Dragon,dragon_10k,10000,Random,4,render,5,1205.469560
+B,Stanford Dragon,dragon_10k,10000,Random,5,build,1,2.381500
+B,Stanford Dragon,dragon_10k,10000,Random,5,build,2,2.361700
+B,Stanford Dragon,dragon_10k,10000,Random,5,build,3,2.440200
+B,Stanford Dragon,dragon_10k,10000,Random,5,build,4,2.411300
+B,Stanford Dragon,dragon_10k,10000,Random,5,build,5,2.488900
+B,Stanford Dragon,dragon_10k,10000,Random,5,render,1,1411.008120
+B,Stanford Dragon,dragon_10k,10000,Random,5,render,2,1405.129080
+B,Stanford Dragon,dragon_10k,10000,Random,5,render,3,1411.004240
+B,Stanford Dragon,dragon_10k,10000,Random,5,render,4,1407.070400
+B,Stanford Dragon,dragon_10k,10000,Random,5,render,5,1405.846720
+B,Stanford Dragon,dragon_50k,50000,LongestAxisCentroid,-,build,1,11.985900
+B,Stanford Dragon,dragon_50k,50000,LongestAxisCentroid,-,build,2,12.556100
+B,Stanford Dragon,dragon_50k,50000,LongestAxisCentroid,-,build,3,11.941000
+B,Stanford Dragon,dragon_50k,50000,LongestAxisCentroid,-,build,4,12.649100
+B,Stanford Dragon,dragon_50k,50000,LongestAxisCentroid,-,build,5,13.816400
+B,Stanford Dragon,dragon_50k,50000,LongestAxisCentroid,-,render,1,1540.464720
+B,Stanford Dragon,dragon_50k,50000,LongestAxisCentroid,-,render,2,1529.722920
+B,Stanford Dragon,dragon_50k,50000,LongestAxisCentroid,-,render,3,1539.232520
+B,Stanford Dragon,dragon_50k,50000,LongestAxisCentroid,-,render,4,1538.554520
+B,Stanford Dragon,dragon_50k,50000,LongestAxisCentroid,-,render,5,1538.195920
+B,Stanford Dragon,dragon_50k,50000,Median,-,build,1,31.367000
+B,Stanford Dragon,dragon_50k,50000,Median,-,build,2,31.527600
+B,Stanford Dragon,dragon_50k,50000,Median,-,build,3,31.452100
+B,Stanford Dragon,dragon_50k,50000,Median,-,build,4,31.935800
+B,Stanford Dragon,dragon_50k,50000,Median,-,build,5,31.903400
+B,Stanford Dragon,dragon_50k,50000,Median,-,render,1,618.304680
+B,Stanford Dragon,dragon_50k,50000,Median,-,render,2,620.607400
+B,Stanford Dragon,dragon_50k,50000,Median,-,render,3,617.066760
+B,Stanford Dragon,dragon_50k,50000,Median,-,render,4,620.410360
+B,Stanford Dragon,dragon_50k,50000,Median,-,render,5,617.072520
+B,Stanford Dragon,dragon_50k,50000,Sah,-,build,1,111.327300
+B,Stanford Dragon,dragon_50k,50000,Sah,-,build,2,111.541000
+B,Stanford Dragon,dragon_50k,50000,Sah,-,build,3,110.953200
+B,Stanford Dragon,dragon_50k,50000,Sah,-,build,4,112.162800
+B,Stanford Dragon,dragon_50k,50000,Sah,-,build,5,112.624900
+B,Stanford Dragon,dragon_50k,50000,Sah,-,render,1,620.584160
+B,Stanford Dragon,dragon_50k,50000,Sah,-,render,2,624.344440
+B,Stanford Dragon,dragon_50k,50000,Sah,-,render,3,625.648000
+B,Stanford Dragon,dragon_50k,50000,Sah,-,render,4,622.414520
+B,Stanford Dragon,dragon_50k,50000,Sah,-,render,5,627.886920
+B,Stanford Dragon,dragon_50k,50000,Random,1,build,1,18.274700
+B,Stanford Dragon,dragon_50k,50000,Random,1,build,2,15.722100
+B,Stanford Dragon,dragon_50k,50000,Random,1,build,3,15.267500
+B,Stanford Dragon,dragon_50k,50000,Random,1,build,4,15.692400
+B,Stanford Dragon,dragon_50k,50000,Random,1,build,5,15.327800
+B,Stanford Dragon,dragon_50k,50000,Random,1,render,1,518.654240
+B,Stanford Dragon,dragon_50k,50000,Random,1,render,2,629.839680
+B,Stanford Dragon,dragon_50k,50000,Random,1,render,3,524.108880
+B,Stanford Dragon,dragon_50k,50000,Random,1,render,4,524.061680
+B,Stanford Dragon,dragon_50k,50000,Random,1,render,5,520.242320
+B,Stanford Dragon,dragon_50k,50000,Random,2,build,1,17.085000
+B,Stanford Dragon,dragon_50k,50000,Random,2,build,2,17.166300
+B,Stanford Dragon,dragon_50k,50000,Random,2,build,3,17.759300
+B,Stanford Dragon,dragon_50k,50000,Random,2,build,4,16.565600
+B,Stanford Dragon,dragon_50k,50000,Random,2,build,5,19.787100
+B,Stanford Dragon,dragon_50k,50000,Random,2,render,1,1561.147240
+B,Stanford Dragon,dragon_50k,50000,Random,2,render,2,1554.488680
+B,Stanford Dragon,dragon_50k,50000,Random,2,render,3,523.631880
+B,Stanford Dragon,dragon_50k,50000,Random,2,render,4,1553.741000
+B,Stanford Dragon,dragon_50k,50000,Random,2,render,5,1562.088640
+B,Stanford Dragon,dragon_50k,50000,Random,3,build,1,14.789400
+B,Stanford Dragon,dragon_50k,50000,Random,3,build,2,17.499300
+B,Stanford Dragon,dragon_50k,50000,Random,3,build,3,17.278900
+B,Stanford Dragon,dragon_50k,50000,Random,3,build,4,15.121900
+B,Stanford Dragon,dragon_50k,50000,Random,3,build,5,15.091400
+B,Stanford Dragon,dragon_50k,50000,Random,3,render,1,1673.553920
+B,Stanford Dragon,dragon_50k,50000,Random,3,render,2,1680.047240
+B,Stanford Dragon,dragon_50k,50000,Random,3,render,3,1676.944880
+B,Stanford Dragon,dragon_50k,50000,Random,3,render,4,1564.768560
+B,Stanford Dragon,dragon_50k,50000,Random,3,render,5,1673.616600
+B,Stanford Dragon,dragon_50k,50000,Random,4,build,1,14.527500
+B,Stanford Dragon,dragon_50k,50000,Random,4,build,2,14.873500
+B,Stanford Dragon,dragon_50k,50000,Random,4,build,3,17.177500
+B,Stanford Dragon,dragon_50k,50000,Random,4,build,4,14.760700
+B,Stanford Dragon,dragon_50k,50000,Random,4,build,5,15.135200
+B,Stanford Dragon,dragon_50k,50000,Random,4,render,1,1720.785560
+B,Stanford Dragon,dragon_50k,50000,Random,4,render,2,1712.364760
+B,Stanford Dragon,dragon_50k,50000,Random,4,render,3,1723.665720
+B,Stanford Dragon,dragon_50k,50000,Random,4,render,4,1721.878600
+B,Stanford Dragon,dragon_50k,50000,Random,4,render,5,1685.146280
+B,Stanford Dragon,dragon_50k,50000,Random,5,build,1,15.517700
+B,Stanford Dragon,dragon_50k,50000,Random,5,build,2,15.711300
+B,Stanford Dragon,dragon_50k,50000,Random,5,build,3,15.708000
+B,Stanford Dragon,dragon_50k,50000,Random,5,build,4,17.912500
+B,Stanford Dragon,dragon_50k,50000,Random,5,build,5,15.598100
+B,Stanford Dragon,dragon_50k,50000,Random,5,render,1,1742.663040
+B,Stanford Dragon,dragon_50k,50000,Random,5,render,2,1755.606840
+B,Stanford Dragon,dragon_50k,50000,Random,5,render,3,1741.386440
+B,Stanford Dragon,dragon_50k,50000,Random,5,render,4,1743.396280
+B,Stanford Dragon,dragon_50k,50000,Random,5,render,5,1737.982280
+B,Stanford Dragon,dragon_150k,150000,LongestAxisCentroid,-,build,1,43.055800
+B,Stanford Dragon,dragon_150k,150000,LongestAxisCentroid,-,build,2,49.760400
+B,Stanford Dragon,dragon_150k,150000,LongestAxisCentroid,-,build,3,42.512800
+B,Stanford Dragon,dragon_150k,150000,LongestAxisCentroid,-,build,4,42.979200
+B,Stanford Dragon,dragon_150k,150000,LongestAxisCentroid,-,build,5,44.585500
+B,Stanford Dragon,dragon_150k,150000,LongestAxisCentroid,-,render,1,2492.474840
+B,Stanford Dragon,dragon_150k,150000,LongestAxisCentroid,-,render,2,2518.457840
+B,Stanford Dragon,dragon_150k,150000,LongestAxisCentroid,-,render,3,2528.117960
+B,Stanford Dragon,dragon_150k,150000,LongestAxisCentroid,-,render,4,2526.574040
+B,Stanford Dragon,dragon_150k,150000,LongestAxisCentroid,-,render,5,2495.445120
+B,Stanford Dragon,dragon_150k,150000,Median,-,build,1,112.192000
+B,Stanford Dragon,dragon_150k,150000,Median,-,build,2,115.679200
+B,Stanford Dragon,dragon_150k,150000,Median,-,build,3,111.644300
+B,Stanford Dragon,dragon_150k,150000,Median,-,build,4,112.719000
+B,Stanford Dragon,dragon_150k,150000,Median,-,build,5,119.644200
+B,Stanford Dragon,dragon_150k,150000,Median,-,render,1,738.393080
+B,Stanford Dragon,dragon_150k,150000,Median,-,render,2,736.402200
+B,Stanford Dragon,dragon_150k,150000,Median,-,render,3,739.549760
+B,Stanford Dragon,dragon_150k,150000,Median,-,render,4,737.440960
+B,Stanford Dragon,dragon_150k,150000,Median,-,render,5,738.312400
+B,Stanford Dragon,dragon_150k,150000,Sah,-,build,1,405.882700
+B,Stanford Dragon,dragon_150k,150000,Sah,-,build,2,404.231800
+B,Stanford Dragon,dragon_150k,150000,Sah,-,build,3,406.702000
+B,Stanford Dragon,dragon_150k,150000,Sah,-,build,4,405.726300
+B,Stanford Dragon,dragon_150k,150000,Sah,-,build,5,405.726200
+B,Stanford Dragon,dragon_150k,150000,Sah,-,render,1,736.927400
+B,Stanford Dragon,dragon_150k,150000,Sah,-,render,2,923.310240
+B,Stanford Dragon,dragon_150k,150000,Sah,-,render,3,919.159760
+B,Stanford Dragon,dragon_150k,150000,Sah,-,render,4,919.268760
+B,Stanford Dragon,dragon_150k,150000,Sah,-,render,5,919.277680
+B,Stanford Dragon,dragon_150k,150000,Random,1,build,1,57.588200
+B,Stanford Dragon,dragon_150k,150000,Random,1,build,2,53.082100
+B,Stanford Dragon,dragon_150k,150000,Random,1,build,3,58.029400
+B,Stanford Dragon,dragon_150k,150000,Random,1,build,4,58.070100
+B,Stanford Dragon,dragon_150k,150000,Random,1,build,5,59.642300
+B,Stanford Dragon,dragon_150k,150000,Random,1,render,1,625.070720
+B,Stanford Dragon,dragon_150k,150000,Random,1,render,2,916.300720
+B,Stanford Dragon,dragon_150k,150000,Random,1,render,3,624.524320
+B,Stanford Dragon,dragon_150k,150000,Random,1,render,4,623.694400
+B,Stanford Dragon,dragon_150k,150000,Random,1,render,5,624.248320
+B,Stanford Dragon,dragon_150k,150000,Random,2,build,1,53.852800
+B,Stanford Dragon,dragon_150k,150000,Random,2,build,2,53.273600
+B,Stanford Dragon,dragon_150k,150000,Random,2,build,3,60.701700
+B,Stanford Dragon,dragon_150k,150000,Random,2,build,4,58.385800
+B,Stanford Dragon,dragon_150k,150000,Random,2,build,5,53.658700
+B,Stanford Dragon,dragon_150k,150000,Random,2,render,1,3260.617080
+B,Stanford Dragon,dragon_150k,150000,Random,2,render,2,3287.516920
+B,Stanford Dragon,dragon_150k,150000,Random,2,render,3,623.538280
+B,Stanford Dragon,dragon_150k,150000,Random,2,render,4,3281.957840
+B,Stanford Dragon,dragon_150k,150000,Random,2,render,5,3277.611920
+B,Stanford Dragon,dragon_150k,150000,Random,3,build,1,50.786500
+B,Stanford Dragon,dragon_150k,150000,Random,3,build,2,57.026900
+B,Stanford Dragon,dragon_150k,150000,Random,3,build,3,50.960500
+B,Stanford Dragon,dragon_150k,150000,Random,3,build,4,52.702800
+B,Stanford Dragon,dragon_150k,150000,Random,3,build,5,55.449700
+B,Stanford Dragon,dragon_150k,150000,Random,3,render,1,1966.399360
+B,Stanford Dragon,dragon_150k,150000,Random,3,render,2,1978.488880
+B,Stanford Dragon,dragon_150k,150000,Random,3,render,3,1973.891680
+B,Stanford Dragon,dragon_150k,150000,Random,3,render,4,3268.359680
+B,Stanford Dragon,dragon_150k,150000,Random,3,render,5,1970.234320
+B,Stanford Dragon,dragon_150k,150000,Random,4,build,1,57.909400
+B,Stanford Dragon,dragon_150k,150000,Random,4,build,2,50.564100
+B,Stanford Dragon,dragon_150k,150000,Random,4,build,3,56.696800
+B,Stanford Dragon,dragon_150k,150000,Random,4,build,4,59.304900
+B,Stanford Dragon,dragon_150k,150000,Random,4,build,5,57.336400
+B,Stanford Dragon,dragon_150k,150000,Random,4,render,1,2140.237080
+B,Stanford Dragon,dragon_150k,150000,Random,4,render,2,2156.060360
+B,Stanford Dragon,dragon_150k,150000,Random,4,render,3,2129.606000
+B,Stanford Dragon,dragon_150k,150000,Random,4,render,4,2136.715640
+B,Stanford Dragon,dragon_150k,150000,Random,4,render,5,1956.587320
+B,Stanford Dragon,dragon_150k,150000,Random,5,build,1,57.136700
+B,Stanford Dragon,dragon_150k,150000,Random,5,build,2,50.818600
+B,Stanford Dragon,dragon_150k,150000,Random,5,build,3,51.682400
+B,Stanford Dragon,dragon_150k,150000,Random,5,build,4,51.397300
+B,Stanford Dragon,dragon_150k,150000,Random,5,build,5,51.768700
+B,Stanford Dragon,dragon_150k,150000,Random,5,render,1,2162.692640
+B,Stanford Dragon,dragon_150k,150000,Random,5,render,2,2165.211680
+B,Stanford Dragon,dragon_150k,150000,Random,5,render,3,2157.304240
+B,Stanford Dragon,dragon_150k,150000,Random,5,render,4,2151.919040
+B,Stanford Dragon,dragon_150k,150000,Random,5,render,5,2161.518320
+B,Stanford Dragon,dragon_400k,400000,LongestAxisCentroid,-,build,1,145.734100
+B,Stanford Dragon,dragon_400k,400000,LongestAxisCentroid,-,build,2,149.698700
+B,Stanford Dragon,dragon_400k,400000,LongestAxisCentroid,-,build,3,131.901300
+B,Stanford Dragon,dragon_400k,400000,LongestAxisCentroid,-,build,4,131.609900
+B,Stanford Dragon,dragon_400k,400000,LongestAxisCentroid,-,build,5,130.387100
+B,Stanford Dragon,dragon_400k,400000,LongestAxisCentroid,-,render,1,3377.396640
+B,Stanford Dragon,dragon_400k,400000,LongestAxisCentroid,-,render,2,3339.341120
+B,Stanford Dragon,dragon_400k,400000,LongestAxisCentroid,-,render,3,3348.288480
+B,Stanford Dragon,dragon_400k,400000,LongestAxisCentroid,-,render,4,3339.373240
+B,Stanford Dragon,dragon_400k,400000,LongestAxisCentroid,-,render,5,3348.201760
+B,Stanford Dragon,dragon_400k,400000,Median,-,build,1,362.933000
+B,Stanford Dragon,dragon_400k,400000,Median,-,build,2,357.345300
+B,Stanford Dragon,dragon_400k,400000,Median,-,build,3,357.224100
+B,Stanford Dragon,dragon_400k,400000,Median,-,build,4,357.029700
+B,Stanford Dragon,dragon_400k,400000,Median,-,build,5,355.627800
+B,Stanford Dragon,dragon_400k,400000,Median,-,render,1,822.623520
+B,Stanford Dragon,dragon_400k,400000,Median,-,render,2,814.665480
+B,Stanford Dragon,dragon_400k,400000,Median,-,render,3,820.529040
+B,Stanford Dragon,dragon_400k,400000,Median,-,render,4,817.353040
+B,Stanford Dragon,dragon_400k,400000,Median,-,render,5,824.332840
+B,Stanford Dragon,dragon_400k,400000,Sah,-,build,1,1290.278400
+B,Stanford Dragon,dragon_400k,400000,Sah,-,build,2,1286.564200
+B,Stanford Dragon,dragon_400k,400000,Sah,-,build,3,1259.718700
+B,Stanford Dragon,dragon_400k,400000,Sah,-,build,4,1266.334300
+B,Stanford Dragon,dragon_400k,400000,Sah,-,build,5,1278.975900
+B,Stanford Dragon,dragon_400k,400000,Sah,-,render,1,815.543840
+B,Stanford Dragon,dragon_400k,400000,Sah,-,render,2,832.269480
+B,Stanford Dragon,dragon_400k,400000,Sah,-,render,3,828.862440
+B,Stanford Dragon,dragon_400k,400000,Sah,-,render,4,833.690520
+B,Stanford Dragon,dragon_400k,400000,Sah,-,render,5,832.306040
+B,Stanford Dragon,dragon_400k,400000,Random,1,build,1,173.257700
+B,Stanford Dragon,dragon_400k,400000,Random,1,build,2,162.326800
+B,Stanford Dragon,dragon_400k,400000,Random,1,build,3,175.220300
+B,Stanford Dragon,dragon_400k,400000,Random,1,build,4,169.733600
+B,Stanford Dragon,dragon_400k,400000,Random,1,build,5,158.408400
+B,Stanford Dragon,dragon_400k,400000,Random,1,render,1,693.937680
+B,Stanford Dragon,dragon_400k,400000,Random,1,render,2,827.799280
+B,Stanford Dragon,dragon_400k,400000,Random,1,render,3,694.787160
+B,Stanford Dragon,dragon_400k,400000,Random,1,render,4,693.521680
+B,Stanford Dragon,dragon_400k,400000,Random,1,render,5,688.526320
+B,Stanford Dragon,dragon_400k,400000,Random,2,build,1,167.453500
+B,Stanford Dragon,dragon_400k,400000,Random,2,build,2,164.571000
+B,Stanford Dragon,dragon_400k,400000,Random,2,build,3,181.978400
+B,Stanford Dragon,dragon_400k,400000,Random,2,build,4,166.408500
+B,Stanford Dragon,dragon_400k,400000,Random,2,build,5,167.273500
+B,Stanford Dragon,dragon_400k,400000,Random,2,render,1,2821.816240
+B,Stanford Dragon,dragon_400k,400000,Random,2,render,2,2827.402760
+B,Stanford Dragon,dragon_400k,400000,Random,2,render,3,690.508400
+B,Stanford Dragon,dragon_400k,400000,Random,2,render,4,2824.256240
+B,Stanford Dragon,dragon_400k,400000,Random,2,render,5,2824.577680
+B,Stanford Dragon,dragon_400k,400000,Random,3,build,1,180.331800
+B,Stanford Dragon,dragon_400k,400000,Random,3,build,2,179.907300
+B,Stanford Dragon,dragon_400k,400000,Random,3,build,3,194.135600
+B,Stanford Dragon,dragon_400k,400000,Random,3,build,4,181.287200
+B,Stanford Dragon,dragon_400k,400000,Random,3,build,5,191.589200
+B,Stanford Dragon,dragon_400k,400000,Random,3,render,1,2986.844080
+B,Stanford Dragon,dragon_400k,400000,Random,3,render,2,3036.035080
+B,Stanford Dragon,dragon_400k,400000,Random,3,render,3,2981.862160
+B,Stanford Dragon,dragon_400k,400000,Random,3,render,4,2835.494400
+B,Stanford Dragon,dragon_400k,400000,Random,3,render,5,2996.709400
+B,Stanford Dragon,dragon_400k,400000,Random,4,build,1,182.939200
+B,Stanford Dragon,dragon_400k,400000,Random,4,build,2,185.766800
+B,Stanford Dragon,dragon_400k,400000,Random,4,build,3,181.484600
+B,Stanford Dragon,dragon_400k,400000,Random,4,build,4,182.054600
+B,Stanford Dragon,dragon_400k,400000,Random,4,build,5,182.876600
+B,Stanford Dragon,dragon_400k,400000,Random,4,render,1,3567.028280
+B,Stanford Dragon,dragon_400k,400000,Random,4,render,2,3565.844800
+B,Stanford Dragon,dragon_400k,400000,Random,4,render,3,3555.354160
+B,Stanford Dragon,dragon_400k,400000,Random,4,render,4,3573.691000
+B,Stanford Dragon,dragon_400k,400000,Random,4,render,5,2994.757360
+B,Stanford Dragon,dragon_400k,400000,Random,5,build,1,167.080400
+B,Stanford Dragon,dragon_400k,400000,Random,5,build,2,167.250600
+B,Stanford Dragon,dragon_400k,400000,Random,5,build,3,170.063200
+B,Stanford Dragon,dragon_400k,400000,Random,5,build,4,176.283200
+B,Stanford Dragon,dragon_400k,400000,Random,5,build,5,164.847500
+B,Stanford Dragon,dragon_400k,400000,Random,5,render,1,3600.281680
+B,Stanford Dragon,dragon_400k,400000,Random,5,render,2,3630.864760
+B,Stanford Dragon,dragon_400k,400000,Random,5,render,3,3665.714840
+B,Stanford Dragon,dragon_400k,400000,Random,5,render,4,3583.001960
+B,Stanford Dragon,dragon_400k,400000,Random,5,render,5,3592.775760
+B,Stanford Dragon,dragon_1000k,1000000,LongestAxisCentroid,-,build,1,390.103700
+B,Stanford Dragon,dragon_1000k,1000000,LongestAxisCentroid,-,build,2,369.607100
+B,Stanford Dragon,dragon_1000k,1000000,LongestAxisCentroid,-,build,3,368.170200
+B,Stanford Dragon,dragon_1000k,1000000,LongestAxisCentroid,-,build,4,368.012800
+B,Stanford Dragon,dragon_1000k,1000000,LongestAxisCentroid,-,build,5,389.390000
+B,Stanford Dragon,dragon_1000k,1000000,LongestAxisCentroid,-,render,1,3511.057400
+B,Stanford Dragon,dragon_1000k,1000000,LongestAxisCentroid,-,render,2,3554.745560
+B,Stanford Dragon,dragon_1000k,1000000,LongestAxisCentroid,-,render,3,3524.720440
+B,Stanford Dragon,dragon_1000k,1000000,LongestAxisCentroid,-,render,4,3519.795360
+B,Stanford Dragon,dragon_1000k,1000000,LongestAxisCentroid,-,render,5,3470.419520
+B,Stanford Dragon,dragon_1000k,1000000,Median,-,build,1,991.515800
+B,Stanford Dragon,dragon_1000k,1000000,Median,-,build,2,1024.744100
+B,Stanford Dragon,dragon_1000k,1000000,Median,-,build,3,989.660500
+B,Stanford Dragon,dragon_1000k,1000000,Median,-,build,4,985.076500
+B,Stanford Dragon,dragon_1000k,1000000,Median,-,build,5,1016.581300
+B,Stanford Dragon,dragon_1000k,1000000,Median,-,render,1,1029.897400
+B,Stanford Dragon,dragon_1000k,1000000,Median,-,render,2,1032.875760
+B,Stanford Dragon,dragon_1000k,1000000,Median,-,render,3,1029.108360
+B,Stanford Dragon,dragon_1000k,1000000,Median,-,render,4,1028.902760
+B,Stanford Dragon,dragon_1000k,1000000,Median,-,render,5,1031.735760
+B,Stanford Dragon,dragon_1000k,1000000,Sah,-,build,1,3685.111000
+B,Stanford Dragon,dragon_1000k,1000000,Sah,-,build,2,3661.621100
+B,Stanford Dragon,dragon_1000k,1000000,Sah,-,build,3,3688.241300
+B,Stanford Dragon,dragon_1000k,1000000,Sah,-,build,4,3654.068400
+B,Stanford Dragon,dragon_1000k,1000000,Sah,-,build,5,3661.487400
+B,Stanford Dragon,dragon_1000k,1000000,Sah,-,render,1,1030.617000
+B,Stanford Dragon,dragon_1000k,1000000,Sah,-,render,2,1113.514720
+B,Stanford Dragon,dragon_1000k,1000000,Sah,-,render,3,1113.311080
+B,Stanford Dragon,dragon_1000k,1000000,Sah,-,render,4,1113.844120
+B,Stanford Dragon,dragon_1000k,1000000,Sah,-,render,5,1116.124600
+B,Stanford Dragon,dragon_1000k,1000000,Random,1,build,1,493.500100
+B,Stanford Dragon,dragon_1000k,1000000,Random,1,build,2,477.541400
+B,Stanford Dragon,dragon_1000k,1000000,Random,1,build,3,499.047200
+B,Stanford Dragon,dragon_1000k,1000000,Random,1,build,4,506.184700
+B,Stanford Dragon,dragon_1000k,1000000,Random,1,build,5,501.637500
+B,Stanford Dragon,dragon_1000k,1000000,Random,1,render,1,870.809640
+B,Stanford Dragon,dragon_1000k,1000000,Random,1,render,2,1115.628160
+B,Stanford Dragon,dragon_1000k,1000000,Random,1,render,3,865.019800
+B,Stanford Dragon,dragon_1000k,1000000,Random,1,render,4,863.722480
+B,Stanford Dragon,dragon_1000k,1000000,Random,1,render,5,868.169440
+B,Stanford Dragon,dragon_1000k,1000000,Random,2,build,1,462.035500
+B,Stanford Dragon,dragon_1000k,1000000,Random,2,build,2,480.612100
+B,Stanford Dragon,dragon_1000k,1000000,Random,2,build,3,481.194700
+B,Stanford Dragon,dragon_1000k,1000000,Random,2,build,4,453.313700
+B,Stanford Dragon,dragon_1000k,1000000,Random,2,build,5,491.021400
+B,Stanford Dragon,dragon_1000k,1000000,Random,2,render,1,3263.116920
+B,Stanford Dragon,dragon_1000k,1000000,Random,2,render,2,3244.107240
+B,Stanford Dragon,dragon_1000k,1000000,Random,2,render,3,869.330720
+B,Stanford Dragon,dragon_1000k,1000000,Random,2,render,4,3235.303080
+B,Stanford Dragon,dragon_1000k,1000000,Random,2,render,5,3242.789440
+B,Stanford Dragon,dragon_1000k,1000000,Random,3,build,1,476.448300
+B,Stanford Dragon,dragon_1000k,1000000,Random,3,build,2,455.507100
+B,Stanford Dragon,dragon_1000k,1000000,Random,3,build,3,456.879800
+B,Stanford Dragon,dragon_1000k,1000000,Random,3,build,4,477.758200
+B,Stanford Dragon,dragon_1000k,1000000,Random,3,build,5,485.869200
+B,Stanford Dragon,dragon_1000k,1000000,Random,3,render,1,3193.099440
+B,Stanford Dragon,dragon_1000k,1000000,Random,3,render,2,3193.743480
+B,Stanford Dragon,dragon_1000k,1000000,Random,3,render,3,3179.689840
+B,Stanford Dragon,dragon_1000k,1000000,Random,3,render,4,3277.641920
+B,Stanford Dragon,dragon_1000k,1000000,Random,3,render,5,3193.040120
+B,Stanford Dragon,dragon_1000k,1000000,Random,4,build,1,506.070600
+B,Stanford Dragon,dragon_1000k,1000000,Random,4,build,2,531.848700
+B,Stanford Dragon,dragon_1000k,1000000,Random,4,build,3,505.542500
+B,Stanford Dragon,dragon_1000k,1000000,Random,4,build,4,530.944500
+B,Stanford Dragon,dragon_1000k,1000000,Random,4,build,5,525.903700
+B,Stanford Dragon,dragon_1000k,1000000,Random,4,render,1,3566.738080
+B,Stanford Dragon,dragon_1000k,1000000,Random,4,render,2,3548.384000
+B,Stanford Dragon,dragon_1000k,1000000,Random,4,render,3,3569.642000
+B,Stanford Dragon,dragon_1000k,1000000,Random,4,render,4,3530.854720
+B,Stanford Dragon,dragon_1000k,1000000,Random,4,render,5,3249.295120
+B,Stanford Dragon,dragon_1000k,1000000,Random,5,build,1,491.505300
+B,Stanford Dragon,dragon_1000k,1000000,Random,5,build,2,491.356200
+B,Stanford Dragon,dragon_1000k,1000000,Random,5,build,3,518.762500
+B,Stanford Dragon,dragon_1000k,1000000,Random,5,build,4,516.344500
+B,Stanford Dragon,dragon_1000k,1000000,Random,5,build,5,489.736900
+B,Stanford Dragon,dragon_1000k,1000000,Random,5,render,1,3262.934960
+B,Stanford Dragon,dragon_1000k,1000000,Random,5,render,2,3258.142240
+B,Stanford Dragon,dragon_1000k,1000000,Random,5,render,3,3191.239880
+B,Stanford Dragon,dragon_1000k,1000000,Random,5,render,4,3239.566600
+B,Stanford Dragon,dragon_1000k,1000000,Random,5,render,5,3223.549560

@@ -6,8 +6,12 @@
 //!
 //! The one rule that matters for honest figures: heatmaps that will be compared
 //! must share a colour scale. `Scale::shared_over` computes one scale across a
-//! whole group and every image in the group is rendered against it, so a darker
+//! whole group and every image in the group is rendered against it, so a lighter
 //! image always means genuinely less work -- never just a different normalisation.
+//!
+//! The figures are drawn light-on-white throughout, because they are read in a
+//! document rather than on a screen. `BG`/`FG`/`MUTED` and the ramps below are
+//! the single place that decision lives.
 
 use std::path::Path;
 
@@ -21,9 +25,19 @@ pub struct Image {
     pixels: Vec<u8>,
 }
 
-pub const BG: [u8; 3] = [18, 18, 22];
-pub const FG: [u8; 3] = [235, 235, 240];
-pub const MUTED: [u8; 3] = [150, 150, 160];
+// Light theme throughout: these figures are read on a white page (the study
+// write-up is a document, not a terminal), so the panel ground is the page and
+// ink is dark. Everything downstream -- ramps, wireframe hues, silhouettes --
+// is anchored to that choice.
+pub const BG: [u8; 3] = [255, 255, 255];
+pub const FG: [u8; 3] = [26, 26, 32];
+pub const MUTED: [u8; 3] = [104, 104, 116];
+/// The page a contact sheet lays its panels on, a shade off white so the panels
+/// read as separate objects rather than as one flood of white.
+pub const SHEET_BG: [u8; 3] = [243, 243, 247];
+/// Hairline around a panel. Without it a heatmap whose empty space is white has
+/// no edge at all once it is pasted into a document.
+pub const PANEL_BORDER: [u8; 3] = [205, 205, 214];
 
 impl Image {
     pub fn new(width: u32, height: u32, fill: [u8; 3]) -> Self {
@@ -67,6 +81,42 @@ impl Image {
         for dy in 0..h {
             self.set(x, y + dy, color);
             self.set(x + w - 1, y + dy, color);
+        }
+    }
+
+    /// Bresenham line between two integer screen points. Coordinates are signed
+    /// because projected geometry routinely lands outside the frame; `set`
+    /// discards anything off-canvas.
+    pub fn draw_line(&mut self, a: (i32, i32), b: (i32, i32), color: [u8; 3]) {
+        let (mut x, mut y) = a;
+        let (x1, y1) = b;
+
+        let dx = (x1 - x).abs();
+        let dy = -(y1 - y).abs();
+        let step_x = if x < x1 { 1 } else { -1 };
+        let step_y = if y < y1 { 1 } else { -1 };
+        let mut error = dx + dy;
+
+        // A line whose endpoints are both far off-canvas can iterate for a very
+        // long time; the span of a projected box is bounded in practice, but cap
+        // it so a degenerate projection cannot hang the figure pass.
+        let budget = (dx - dy) as u32 + 2;
+        for _ in 0..budget.min(1 << 16) {
+            if x >= 0 && y >= 0 {
+                self.set(x as u32, y as u32, color);
+            }
+            if x == x1 && y == y1 {
+                break;
+            }
+            let doubled = 2 * error;
+            if doubled >= dy {
+                error += dy;
+                x += step_x;
+            }
+            if doubled <= dx {
+                error += dx;
+                y += step_y;
+            }
         }
     }
 
@@ -133,7 +183,7 @@ impl Image {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Palette {
-    /// Perceptually uniform, dark-to-bright. Good default for cost heatmaps.
+    /// Perceptually uniform, page-to-dark. Good default for cost heatmaps.
     Inferno,
     /// Perceptually uniform, colour-blind safe.
     Viridis,
@@ -141,9 +191,21 @@ pub enum Palette {
     Turbo,
 }
 
+// Inferno, run backwards from its bright end and anchored on the page colour, so
+// that low cost fades into white and high cost is the darkest ink on the sheet.
+// Reversing a perceptually uniform ramp keeps it perceptually uniform; what it
+// changes is which end of the scale disappears into the paper, and on a white
+// page that has to be the cheap end.
+//
+// The pale end is given two extra stops that inferno does not have. Under a log
+// ramp the bottom of the scale covers most of the frame, and going straight from
+// white to inferno's full yellow floods the panel with colour at values that are
+// barely above nothing; easing through cream keeps "almost free" looking almost
+// blank.
 const INFERNO: &[[u8; 3]] = &[
-    [0, 0, 4], [22, 11, 57], [66, 10, 104], [106, 23, 110], [147, 38, 103],
-    [188, 55, 84], [221, 81, 58], [243, 128, 26], [246, 186, 39], [252, 255, 164],
+    [255, 255, 255], [255, 251, 214], [253, 246, 150], [250, 213, 95], [246, 186, 39],
+    [243, 128, 26], [221, 81, 58], [188, 55, 84], [147, 38, 103], [106, 23, 110],
+    [66, 10, 104], [22, 11, 57], [0, 0, 4],
 ];
 
 const VIRIDIS: &[[u8; 3]] = &[
@@ -157,13 +219,15 @@ const TURBO: &[[u8; 3]] = &[
     [165, 17, 2],
 ];
 
-/// Cool -> dark -> warm, for signed difference maps.
+/// Cool -> page -> warm, for signed difference maps.
 ///
-/// The neutral midpoint is dark rather than white so "no difference" recedes
-/// instead of dominating, and so the figure sits alongside the heatmaps.
+/// The neutral midpoint is the page colour, so "no difference" is literally
+/// blank and only the pixels where two heuristics disagree carry ink. Both arms
+/// darken away from the centre, which is what makes the magnitude readable in
+/// print and in greyscale.
 const DIVERGENT: &[[u8; 3]] = &[
-    [120, 190, 255], [60, 120, 200], [28, 48, 90], [20, 20, 26],
-    [95, 35, 40], [200, 70, 50], [255, 150, 100],
+    [16, 60, 122], [43, 110, 190], [138, 184, 236], [255, 255, 255],
+    [244, 166, 138], [201, 72, 46], [122, 24, 16],
 ];
 
 fn ramp(stops: &[[u8; 3]], t: f32) -> [u8; 3] {
@@ -197,10 +261,21 @@ pub fn divergent(t: f32) -> [u8; 3] {
 
 // ---- Scaling ---------------------------------------------------------------
 
+/// How a value in [0, `Scale::max`] is mapped onto the colour ramp.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScaleKind {
+    Linear,
+    /// `ln(1 + v) / ln(1 + max)`. Used when the dynamic range is so wide that a
+    /// linear ramp would push the bulk of the image into the first few percent.
+    /// The `1 +` keeps zero at zero, so empty pixels stay empty.
+    Log,
+}
+
 /// The value range a group of heatmaps is rendered against.
 #[derive(Debug, Clone, Copy)]
 pub struct Scale {
     pub max: f32,
+    pub kind: ScaleKind,
 }
 
 impl Scale {
@@ -219,12 +294,75 @@ impl Scale {
         }
 
         if all.is_empty() {
-            return Scale { max: 1.0 };
+            return Scale { max: 1.0, kind: ScaleKind::Linear };
         }
 
         all.sort_by(f32::total_cmp);
         let rank = ((0.995 * all.len() as f32).ceil() as usize).clamp(1, all.len());
-        Scale { max: all[rank - 1].max(1e-6) }
+        Scale { max: all[rank - 1].max(1e-6), kind: ScaleKind::Linear }
+    }
+
+    /// True maximum over every field, with no percentile clipping, and a ramp
+    /// chosen from the observed dynamic range.
+    ///
+    /// This is the scale for figures whose caption claims a *shared absolute*
+    /// colour scale: nothing is clipped, so a pixel's colour maps back to a real
+    /// number on the colourbar. When the top of the range is more than 20x the
+    /// median of the non-empty pixels a linear ramp would leave every typical
+    /// pixel all but blank -- traversal fields routinely run 40:1 or worse, because a
+    /// handful of grazing rays cost far more than any typical one -- so the ramp
+    /// switches to logarithmic, which the caller states in the caption via
+    /// `Scale::kind_label`.
+    pub fn absolute_over<'a>(fields: impl IntoIterator<Item = &'a [f32]>) -> Self {
+        let mut all: Vec<f32> = Vec::new();
+        for field in fields {
+            all.extend(field.iter().copied().filter(|v| *v > 0.0));
+        }
+
+        if all.is_empty() {
+            return Scale { max: 1.0, kind: ScaleKind::Linear };
+        }
+
+        all.sort_by(f32::total_cmp);
+        let max = all[all.len() - 1].max(1e-6);
+        let median = all[all.len() / 2].max(1e-6);
+        let kind = if max / median > 20.0 { ScaleKind::Log } else { ScaleKind::Linear };
+
+        Scale { max, kind }
+    }
+
+    /// Maps a value onto [0, 1] for the colour ramp.
+    pub fn normalize(&self, value: f32) -> f32 {
+        match self.kind {
+            ScaleKind::Linear => value / self.max,
+            ScaleKind::Log => {
+                let denominator = (1.0 + self.max).ln();
+                if denominator <= 0.0 { 0.0 } else { (1.0 + value.max(0.0)).ln() / denominator }
+            }
+        }
+    }
+
+    /// Tick values for the colourbar, in ramp order. Linear ticks are evenly
+    /// spaced in value; log ticks are evenly spaced in ramp *position*, which is
+    /// what makes a log colourbar readable.
+    pub fn ticks(&self, count: usize) -> Vec<f32> {
+        let count = count.max(2);
+        (0..count)
+            .map(|index| {
+                let t = index as f32 / (count - 1) as f32;
+                match self.kind {
+                    ScaleKind::Linear => t * self.max,
+                    ScaleKind::Log => ((1.0 + self.max).ln() * t).exp() - 1.0,
+                }
+            })
+            .collect()
+    }
+
+    pub fn kind_label(&self) -> &'static str {
+        match self.kind {
+            ScaleKind::Linear => "linear",
+            ScaleKind::Log => "log",
+        }
     }
 }
 
@@ -245,7 +383,7 @@ pub struct HeatmapSpec<'a> {
 }
 
 const HEADER_HEIGHT: u32 = 34;
-const BAR_HEIGHT: u32 = 30;
+const BAR_HEIGHT: u32 = 40;
 const PAD: u32 = 8;
 
 /// Renders one field as a titled heatmap with a colourbar underneath.
@@ -260,19 +398,30 @@ pub fn render_heatmap(spec: &HeatmapSpec) -> Image {
         for x in 0..spec.width {
             let value = spec.values[(y * spec.width + x) as usize];
             let color = if value <= 0.0 {
-                // Zero is "no traversal happened here" -- keep it flat background
-                // rather than the palette's darkest colour, so empty space reads
-                // as empty rather than as cheap.
+                // Zero is "no traversal happened here", and it stays the page
+                // colour. On the light ramp that sits just beyond the cheapest
+                // value rather than opposite it, so empty space and near-free
+                // space no longer read as two unrelated things.
                 BG
             } else {
-                spec.palette.sample(value / spec.scale.max)
+                spec.palette.sample(spec.scale.normalize(value))
             };
             canvas.set(x, HEADER_HEIGHT + y, color);
         }
     }
 
+    frame_field(&mut canvas, HEADER_HEIGHT, spec.width, spec.height);
     draw_colorbar(&mut canvas, HEADER_HEIGHT + spec.height, spec);
     canvas
+}
+
+/// Outlines the image area of a panel.
+///
+/// On the dark theme the field was bounded by its own darkness against the page;
+/// white-on-white has no such edge, and a heatmap pasted into a document needs
+/// one or it bleeds into the paragraph around it.
+fn frame_field(canvas: &mut Image, top: u32, width: u32, height: u32) {
+    canvas.stroke_rect(0, top, width, height, PANEL_BORDER);
 }
 
 fn draw_colorbar(canvas: &mut Image, top: u32, spec: &HeatmapSpec) {
@@ -288,18 +437,34 @@ fn draw_colorbar(canvas: &mut Image, top: u32, spec: &HeatmapSpec) {
     }
     canvas.stroke_rect(PAD, bar_top, bar_width, bar_height, MUTED);
 
+    // Numbered ticks along the bar, so a colour can be read back as a value
+    // rather than only as "more" or "less". Five is as many as the 5x7 font fits
+    // across a 640px panel without labels colliding.
     let label_y = bar_top + bar_height + 4;
-    canvas.draw_text(PAD, label_y, "0", 1, MUTED);
+    let ticks = spec.scale.ticks(5);
+    let tick_count = ticks.len();
+    for (index, value) in ticks.iter().enumerate() {
+        let t = index as f32 / (tick_count - 1) as f32;
+        let x = PAD + (t * bar_width.saturating_sub(1) as f32) as u32;
 
-    let max_label = format!("{}+", format_number(spec.scale.max));
-    let max_width = Image::text_width(&max_label, 1);
-    canvas.draw_text(PAD + bar_width - max_width, label_y, &max_label, 1, MUTED);
+        for y in 0..3 {
+            canvas.set(x, bar_top + bar_height + y, MUTED);
+        }
 
-    let legend = spec.legend.to_uppercase();
+        let label = format_number(*value);
+        let label_width = Image::text_width(&label, 1);
+        // Nudge the end labels inward so neither runs off the panel.
+        let label_x = (x + label_width / 2)
+            .saturating_sub(label_width)
+            .min(PAD + bar_width - label_width);
+        canvas.draw_text(label_x.max(PAD), label_y, &label, 1, MUTED);
+    }
+
+    let legend = format!("{}  ({} scale)", spec.legend, spec.scale.kind_label()).to_uppercase();
     let legend_width = Image::text_width(&legend, 1);
     canvas.draw_text(
-        PAD + bar_width / 2 - legend_width / 2,
-        label_y,
+        PAD + bar_width / 2 - (legend_width / 2).min(bar_width / 2),
+        label_y + 9,
         &legend,
         1,
         MUTED,
@@ -316,24 +481,47 @@ pub fn render_difference(
     title: &str,
     subtitle: &str,
 ) -> Image {
-    // Scale to the 99th percentile of the magnitudes that actually differ, not
-    // the raw maximum: a handful of extreme pixels would otherwise push every
-    // typical difference into the neutral band and the figure would read blank.
-    let mut magnitudes: Vec<f32> = a
-        .iter()
-        .zip(b)
-        .map(|(left, right)| (left - right).abs())
-        .filter(|d| *d > 0.0)
-        .collect();
+    let peak = difference_peak([(a, b)]);
+    render_difference_scaled(a, b, peak, width, height, title, subtitle)
+}
+
+/// The symmetric half-range a set of difference maps should share.
+///
+/// Taken from the 99th percentile of the magnitudes that actually differ rather
+/// than the raw maximum: a handful of extreme pixels would otherwise push every
+/// typical difference into the neutral band and the figures would read blank.
+/// Computed across *all* pairs at once so a group of difference panels can be
+/// compared against each other, not just each against itself.
+pub fn difference_peak<'a>(pairs: impl IntoIterator<Item = (&'a [f32], &'a [f32])>) -> f32 {
+    let mut magnitudes: Vec<f32> = Vec::new();
+    for (a, b) in pairs {
+        magnitudes.extend(
+            a.iter()
+                .zip(b)
+                .map(|(left, right)| (left - right).abs())
+                .filter(|d| *d > 0.0),
+        );
+    }
+    if magnitudes.is_empty() {
+        return 1.0;
+    }
     magnitudes.sort_by(f32::total_cmp);
+    let rank = ((0.99 * magnitudes.len() as f32).ceil() as usize).clamp(1, magnitudes.len());
+    magnitudes[rank - 1].max(1e-6)
+}
 
-    let peak = if magnitudes.is_empty() {
-        1.0
-    } else {
-        let rank = ((0.99 * magnitudes.len() as f32).ceil() as usize).clamp(1, magnitudes.len());
-        magnitudes[rank - 1].max(1e-6)
-    };
-
+/// As `render_difference`, but against a caller-supplied symmetric half-range so
+/// several panels can share one scale.
+pub fn render_difference_scaled(
+    a: &[f32],
+    b: &[f32],
+    peak: f32,
+    width: u32,
+    height: u32,
+    title: &str,
+    subtitle: &str,
+) -> Image {
+    let peak = peak.max(1e-6);
     let mut canvas = Image::new(width, HEADER_HEIGHT + height + BAR_HEIGHT, BG);
     canvas.draw_text(PAD, 6, &title.to_uppercase(), 2, FG);
     canvas.draw_text(PAD, 22, &subtitle.to_uppercase(), 1, MUTED);
@@ -350,6 +538,8 @@ pub fn render_difference(
             canvas.set(x, HEADER_HEIGHT + y, color);
         }
     }
+
+    frame_field(&mut canvas, HEADER_HEIGHT, width, height);
 
     let bar_width = width.saturating_sub(PAD * 2);
     let bar_top = HEADER_HEIGHT + height + 6;
@@ -371,6 +561,10 @@ pub fn render_difference(
         1,
         MUTED,
     );
+    // The centre tick is the point of a diverging map: it marks where the two
+    // heuristics cost exactly the same.
+    let zero_width = Image::text_width("0", 1);
+    canvas.draw_text(PAD + bar_width / 2 - zero_width / 2, label_y, "0", 1, MUTED);
 
     canvas
 }
@@ -398,6 +592,7 @@ pub fn render_beauty(
         }
     }
 
+    frame_field(&mut canvas, HEADER_HEIGHT, width, height);
     canvas
 }
 
@@ -420,7 +615,7 @@ pub fn contact_sheet(panels: &[Image], columns: u32, banner: &str, caption: &str
     let width = columns * panel_width + (columns + 1) * gap;
     let height = banner_height + rows * panel_height + (rows + 1) * gap;
 
-    let mut sheet = Image::new(width, height, [10, 10, 13]);
+    let mut sheet = Image::new(width, height, SHEET_BG);
     sheet.draw_text(gap, 8, &banner.to_uppercase(), 3, FG);
     sheet.draw_text(gap, 30, &caption.to_uppercase(), 1, MUTED);
 
@@ -430,7 +625,7 @@ pub fn contact_sheet(panels: &[Image], columns: u32, banner: &str, caption: &str
         let x = gap + column * (panel_width + gap);
         let y = banner_height + gap + row * (panel_height + gap);
         sheet.blit(panel, x, y);
-        sheet.stroke_rect(x, y, panel.width, panel.height, [45, 45, 52]);
+        sheet.stroke_rect(x, y, panel.width, panel.height, PANEL_BORDER);
     }
 
     sheet

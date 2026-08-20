@@ -72,14 +72,14 @@ pub fn bvh_icicle_svg(root: &BVHNode, heuristic: &str, scene: &str) -> String {
         svg,
         r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {WIDTH} {height:.0}" width="{WIDTH}" height="{height:.0}" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">"##
     );
-    let _ = write!(svg, r##"<rect width="100%" height="100%" fill="#111116"/>"##);
+    let _ = write!(svg, r##"<rect width="100%" height="100%" fill="#ffffff"/>"##);
     let _ = write!(
         svg,
-        r##"<text x="{MARGIN_SIDE}" y="26" fill="#ebebf0" font-size="17" font-weight="600">{heuristic}</text>"##
+        r##"<text x="{MARGIN_SIDE}" y="26" fill="#1a1a20" font-size="17" font-weight="600">{heuristic}</text>"##
     );
     let _ = write!(
         svg,
-        r##"<text x="{MARGIN_SIDE}" y="43" fill="#9696a0" font-size="11">{scene} &#183; {} nodes &#183; max depth {max_depth} &#183; width = primitives contained</text>"##,
+        r##"<text x="{MARGIN_SIDE}" y="43" fill="#5f5f6b" font-size="11">{scene} &#183; {} nodes &#183; max depth {max_depth} &#183; width = primitives contained</text>"##,
         spans.len()
     );
 
@@ -88,8 +88,11 @@ pub fn bvh_icicle_svg(root: &BVHNode, heuristic: &str, scene: &str) -> String {
         let w = (span.width * plot_width).max(0.35);
         let y = MARGIN_TOP + span.depth as f64 * ROW;
 
+        // Viridis run backwards and stopped short of its yellow end: read on
+        // white, the bright half of the ramp is barely ink at all, so depth is
+        // mapped onto the half that darkens instead. Deeper is darker.
         let t = if max_depth == 0 { 0.0 } else { span.depth as f32 / max_depth as f32 };
-        let [r, g, b] = Palette::Viridis.sample(t);
+        let [r, g, b] = Palette::Viridis.sample(0.72 * (1.0 - t));
         // Leaves are drawn solid and interiors translucent, so the boundary
         // between "still subdividing" and "done" is readable at a glance.
         let opacity = if span.is_leaf { 1.0 } else { 0.55 };
@@ -110,7 +113,7 @@ pub fn bvh_icicle_svg(root: &BVHNode, heuristic: &str, scene: &str) -> String {
         let y = MARGIN_TOP + depth as f64 * ROW + ROW - 3.0;
         let _ = write!(
             svg,
-            r##"<text x="{:.0}" y="{y:.1}" fill="#5a5a66" font-size="8">{depth}</text>"##,
+            r##"<text x="{:.0}" y="{y:.1}" fill="#7a7a86" font-size="8">{depth}</text>"##,
             MARGIN_SIDE - 12.0
         );
         depth += 4;
@@ -118,7 +121,7 @@ pub fn bvh_icicle_svg(root: &BVHNode, heuristic: &str, scene: &str) -> String {
 
     let _ = write!(
         svg,
-        r##"<text x="{MARGIN_SIDE}" y="{:.0}" fill="#9696a0" font-size="10">SOLID = LEAF &#183; TRANSLUCENT = INTERIOR &#183; ROW = TREE DEPTH</text>"##,
+        r##"<text x="{MARGIN_SIDE}" y="{:.0}" fill="#5f5f6b" font-size="10">SOLID = LEAF &#183; TRANSLUCENT = INTERIOR &#183; ROW = TREE DEPTH</text>"##,
         height - 14.0
     );
     svg.push_str("</svg>");
@@ -147,21 +150,23 @@ pub fn depth_histogram_svg(scene: &str, series: &[(String, Vec<usize>)]) -> Stri
     let group_width = plot_width / max_depth as f64;
     let bar_width = (group_width / series.len() as f64) * 0.82;
 
-    let colors = ["#4f9dff", "#59d9a4", "#ffc857", "#ff6b6b"];
+    // Same palette as `charts::heuristic_color`, in the same order, so a
+    // heuristic keeps one colour across the whole figure set.
+    let colors = ["#1f6fd0", "#0f8266", "#a8701a", "#c93b3b"];
 
     let mut svg = String::new();
     let _ = write!(
         svg,
         r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {WIDTH} {HEIGHT}" width="{WIDTH}" height="{HEIGHT}" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">"##
     );
-    let _ = write!(svg, r##"<rect width="100%" height="100%" fill="#111116"/>"##);
+    let _ = write!(svg, r##"<rect width="100%" height="100%" fill="#ffffff"/>"##);
     let _ = write!(
         svg,
-        r##"<text x="{LEFT}" y="26" fill="#ebebf0" font-size="17" font-weight="600">NODES PER DEPTH &#8212; {scene}</text>"##
+        r##"<text x="{LEFT}" y="26" fill="#1a1a20" font-size="17" font-weight="600">NODES PER DEPTH &#8212; {scene}</text>"##
     );
     let _ = write!(
         svg,
-        r##"<text x="{LEFT}" y="43" fill="#9696a0" font-size="11">a balanced build stops early; a long tail means deep, lopsided subtrees</text>"##
+        r##"<text x="{LEFT}" y="43" fill="#5f5f6b" font-size="11">a balanced build stops early; a long tail means deep, lopsided subtrees</text>"##
     );
 
     // Horizontal gridlines with counts.
@@ -170,12 +175,12 @@ pub fn depth_histogram_svg(scene: &str, series: &[(String, Vec<usize>)]) -> Stri
         let y = TOP + plot_height * (1.0 - fraction);
         let _ = write!(
             svg,
-            r##"<line x1="{LEFT}" y1="{y:.1}" x2="{:.1}" y2="{y:.1}" stroke="#2a2a33"/>"##,
+            r##"<line x1="{LEFT}" y1="{y:.1}" x2="{:.1}" y2="{y:.1}" stroke="#e3e3ea"/>"##,
             WIDTH - RIGHT
         );
         let _ = write!(
             svg,
-            r##"<text x="{:.1}" y="{:.1}" fill="#5a5a66" font-size="9" text-anchor="end">{}</text>"##,
+            r##"<text x="{:.1}" y="{:.1}" fill="#7a7a86" font-size="9" text-anchor="end">{}</text>"##,
             LEFT - 6.0,
             y + 3.0,
             (max_count as f64 * fraction).round() as usize
@@ -204,7 +209,7 @@ pub fn depth_histogram_svg(scene: &str, series: &[(String, Vec<usize>)]) -> Stri
     while depth < max_depth {
         let _ = write!(
             svg,
-            r##"<text x="{:.1}" y="{:.1}" fill="#5a5a66" font-size="9" text-anchor="middle">{depth}</text>"##,
+            r##"<text x="{:.1}" y="{:.1}" fill="#7a7a86" font-size="9" text-anchor="middle">{depth}</text>"##,
             LEFT + (depth as f64 + 0.5) * group_width,
             TOP + plot_height + 14.0
         );
@@ -212,7 +217,7 @@ pub fn depth_histogram_svg(scene: &str, series: &[(String, Vec<usize>)]) -> Stri
     }
     let _ = write!(
         svg,
-        r##"<text x="{:.1}" y="{:.1}" fill="#9696a0" font-size="10" text-anchor="middle">TREE DEPTH</text>"##,
+        r##"<text x="{:.1}" y="{:.1}" fill="#5f5f6b" font-size="10" text-anchor="middle">TREE DEPTH</text>"##,
         LEFT + plot_width / 2.0,
         HEIGHT - 12.0
     );
@@ -230,7 +235,7 @@ pub fn depth_histogram_svg(scene: &str, series: &[(String, Vec<usize>)]) -> Stri
         );
         let _ = write!(
             svg,
-            r##"<text x="{:.1}" y="{:.1}" fill="#9696a0" font-size="10">{name}</text>"##,
+            r##"<text x="{:.1}" y="{:.1}" fill="#5f5f6b" font-size="10">{name}</text>"##,
             legend_x + 13.0,
             TOP - 6.0
         );

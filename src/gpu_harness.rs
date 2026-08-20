@@ -15,16 +15,42 @@ use crate::shaders::{self, ShaderVariant};
 use wgpu::util::DeviceExt;
 use wgpu::PollType;
 
-/// Geometry uploaded for one (scene, heuristic) combination.
-pub struct SceneUpload {
-    _sphere_buffer: wgpu::Buffer,
-    _triangle_buffer: wgpu::Buffer,
-    _plane_buffer: wgpu::Buffer,
+/// Geometry shared by every heuristic measured on one scene.
+///
+/// Split out from the BVH so that all of a scene's trees can be resident at once
+/// without paying for a duplicate copy of the triangle list each -- which is what
+/// lets the study driver interleave its timed dispatches across heuristics
+/// instead of running each heuristic's repeats back to back.
+pub struct GeometryUpload {
+    sphere_buffer: wgpu::Buffer,
+    triangle_buffer: wgpu::Buffer,
+    plane_buffer: wgpu::Buffer,
+    /// The uniform block with everything except the two BVH sizes filled in.
+    /// Those depend on the tree, and the shader bounds-checks every node and
+    /// index against them, so the buffer itself has to be built per tree.
+    counts_template: Counts,
+}
+
+/// One flattened tree bound against a `GeometryUpload`.
+pub struct BvhUpload {
     _bvh_node_buffer: wgpu::Buffer,
     _bvh_index_buffer: wgpu::Buffer,
     _counts_buffer: wgpu::Buffer,
     clean_bind_group: wgpu::BindGroup,
     instrumented_bind_group: wgpu::BindGroup,
+}
+
+/// Geometry plus one tree, for callers that measure a single combination at a
+/// time and have no reason to keep the two apart.
+pub struct SceneUpload {
+    _geometry: GeometryUpload,
+    bvh: BvhUpload,
+}
+
+impl SceneUpload {
+    pub fn bvh(&self) -> &BvhUpload {
+        &self.bvh
+    }
 }
 
 /// Reduction of the per-ray counter buffer (§5 Option B).
@@ -250,6 +276,12 @@ impl GpuHarness {
         self.queue.write_buffer(&self.ray_buffer, 0, bytemuck::cast_slice(rays));
     }
 
+    /// Nanoseconds per GPU timestamp tick, when the adapter can report it. This
+    /// is the resolution floor every render time in the study is quoted against.
+    pub fn timestamp_period_ns(&self) -> Option<f32> {
+        self.timestamps.as_ref().map(|rig| rig.period_ns)
+    }
+
     /// Uploads one flattened BVH plus its geometry and builds both bind groups.
     pub fn upload_scene(
         &self,
@@ -259,7 +291,23 @@ impl GpuHarness {
         bvh_indices: &[u32],
         samples: u32,
         rng_seed: u32,
+        max_bounces: u32,
     ) -> SceneUpload {
+        let geometry = self.upload_geometry(triangles, planes, samples, rng_seed, max_bounces);
+        let bvh = self.upload_bvh(&geometry, bvh_nodes, bvh_indices);
+        SceneUpload { _geometry: geometry, bvh }
+    }
+
+    /// Uploads the per-scene geometry and the uniform block. Everything here is
+    /// identical for every heuristic, so it is uploaded once per scene.
+    pub fn upload_geometry(
+        &self,
+        triangles: &[GpuTriangle],
+        planes: &[GpuPlane],
+        samples: u32,
+        rng_seed: u32,
+        max_bounces: u32,
+    ) -> GeometryUpload {
         // Storage buffers may not be zero-sized, so empty categories get one
         // inert element. Spheres are unused by the harness scenes entirely.
         let spheres = [GpuSphere {
@@ -281,8 +329,9 @@ impl GpuHarness {
             width: self.width,
             height: self.height,
             frame_number: 0,
-            bvh_node_count: bvh_nodes.len() as u32,
-            bvh_index_count: bvh_indices.len() as u32,
+            // Filled in per tree by `upload_bvh`.
+            bvh_node_count: 0,
+            bvh_index_count: 0,
             samples,
             rng_seed,
             // The harness always measures the rendered image. Live cost views are
@@ -291,16 +340,37 @@ impl GpuHarness {
             palette: 0,
             heat_scale: 1.0,
             heat_mix: 0.0,
-            max_bounces: 10,
+            max_bounces: max_bounces.max(1),
             _pad0: 0,
         };
 
         let sphere_buffer = self.storage_init("Harness Spheres", bytemuck::cast_slice(&spheres));
         let triangle_buffer = self.storage_init("Harness Triangles", bytemuck::cast_slice(triangles));
         let plane_buffer = self.storage_init("Harness Planes", bytemuck::cast_slice(planes));
+
+        GeometryUpload {
+            sphere_buffer,
+            triangle_buffer,
+            plane_buffer,
+            counts_template: counts,
+        }
+    }
+
+    /// Binds one flattened tree against already-uploaded geometry.
+    pub fn upload_bvh(
+        &self,
+        geometry: &GeometryUpload,
+        bvh_nodes: &[GpuBVHNode],
+        bvh_indices: &[u32],
+    ) -> BvhUpload {
         let bvh_node_buffer = self.storage_init("Harness BVH Nodes", bytemuck::cast_slice(bvh_nodes));
         let bvh_index_buffer = self.storage_init("Harness BVH Indices", bytemuck::cast_slice(bvh_indices));
 
+        let counts = Counts {
+            bvh_node_count: bvh_nodes.len() as u32,
+            bvh_index_count: bvh_indices.len() as u32,
+            ..geometry.counts_template
+        };
         let counts_buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Harness Counts"),
             contents: bytemuck::cast_slice(&[counts]),
@@ -310,9 +380,9 @@ impl GpuHarness {
         let shared = [
             wgpu::BindGroupEntry { binding: 0, resource: self.ray_buffer.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 1, resource: self.color_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 2, resource: sphere_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 3, resource: triangle_buffer.as_entire_binding() },
-            wgpu::BindGroupEntry { binding: 4, resource: plane_buffer.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 2, resource: geometry.sphere_buffer.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 3, resource: geometry.triangle_buffer.as_entire_binding() },
+            wgpu::BindGroupEntry { binding: 4, resource: geometry.plane_buffer.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 5, resource: counts_buffer.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 6, resource: bvh_node_buffer.as_entire_binding() },
             wgpu::BindGroupEntry { binding: 7, resource: bvh_index_buffer.as_entire_binding() },
@@ -336,10 +406,7 @@ impl GpuHarness {
             entries: &instrumented_entries,
         });
 
-        SceneUpload {
-            _sphere_buffer: sphere_buffer,
-            _triangle_buffer: triangle_buffer,
-            _plane_buffer: plane_buffer,
+        BvhUpload {
             _bvh_node_buffer: bvh_node_buffer,
             _bvh_index_buffer: bvh_index_buffer,
             _counts_buffer: counts_buffer,
@@ -355,7 +422,7 @@ impl GpuHarness {
     /// for them only when it is actually going to draw something.
     pub fn collect_counters(
         &self,
-        scene: &SceneUpload,
+        scene: &BvhUpload,
         keep_records: bool,
     ) -> (CounterSummary, Option<Vec<GpuRayCounters>>) {
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -397,7 +464,7 @@ impl GpuHarness {
     /// One clean dispatch whose colour output is read back, for the reference
     /// image that accompanies the heatmaps. Values are linear HDR; tone mapping
     /// happens in `viz`.
-    pub fn capture_color(&self, scene: &SceneUpload) -> Vec<[f32; 3]> {
+    pub fn capture_color(&self, scene: &BvhUpload) -> Vec<[f32; 3]> {
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
             label: Some("Colour Capture"),
         });
@@ -438,7 +505,7 @@ impl GpuHarness {
     /// averaged.
     pub fn measure_render_time(
         &self,
-        scene: &SceneUpload,
+        scene: &BvhUpload,
         warmup_runs: u32,
         timed_runs: u32,
     ) -> TimingSummary {
@@ -479,8 +546,19 @@ impl GpuHarness {
         }
     }
 
+    /// One timed clean dispatch. `None` when the adapter cannot time it, or when
+    /// the timestamp pair came back unusable.
+    ///
+    /// Exposed separately from `measure_render_time` so a caller can interleave
+    /// single dispatches across several variants; running each variant's repeats
+    /// back to back would confound the heuristic with whatever the GPU's clocks
+    /// were doing during that variant's block.
+    pub fn timed_dispatch(&self, scene: &BvhUpload) -> Option<f64> {
+        self.dispatch_clean(scene, true)
+    }
+
     /// One clean dispatch. Returns the GPU-side duration in ms when timed.
-    fn dispatch_clean(&self, scene: &SceneUpload, timed: bool) -> Option<f64> {
+    fn dispatch_clean(&self, scene: &BvhUpload, timed: bool) -> Option<f64> {
         let rig = self.timestamps.as_ref().filter(|_| timed);
 
         let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {

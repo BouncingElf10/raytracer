@@ -25,6 +25,10 @@ mod viz;
 mod diagrams;
 mod figures;
 mod capture;
+mod charts;
+mod study;
+mod study_figures;
+mod wireframe;
 mod ui;
 
 const DEBUG_MODE: bool = true;
@@ -33,6 +37,10 @@ const DEBUG_MODE: bool = true;
 async fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.first().map(String::as_str) {
+        Some("study") => {
+            run_study(&args[1..]);
+            return;
+        }
         Some("harness") => {
             run_harness(&args[1..]);
             return;
@@ -163,6 +171,24 @@ impl DebugKeys {
         if pressed(canvas.is_key_down(Key::Backslash), &mut self.reset) {
             view.show_all_depths();
         }
+    }
+}
+
+/// Runs the whole study protocol -- every scene, every heuristic, every repeat --
+/// and writes the tables and figures. This is the one command the write-up is
+/// generated from.
+fn run_study(args: &[String]) {
+    let config = match study::parse_args(args) {
+        Ok(config) => config,
+        Err(message) => {
+            eprintln!("{message}");
+            std::process::exit(2);
+        }
+    };
+
+    if let Err(error) = study::run(&config) {
+        eprintln!("study failed: {error}");
+        std::process::exit(1);
     }
 }
 
